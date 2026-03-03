@@ -25,6 +25,12 @@
         <div class="max-w-md mx-auto flex items-center justify-between">
           <span class="font-semibold text-gray-800">GIAE</span>
           <div class="flex items-center gap-4">
+            <% latest_saldo = SaldoRecord.latest_for_user(current_user) %>
+            <% if latest_saldo %>
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                <%= number_to_currency(latest_saldo.cents / 100.0, unit: "€", separator: ",", delimiter: ".") %>
+              </span>
+            <% end %>
             <div class="relative" data-controller="dropdown">
               <button type="button" data-action="dropdown#toggle" class="relative text-gray-600 hover:text-gray-800">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">

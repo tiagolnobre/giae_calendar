@@ -41,24 +41,41 @@ class GiaeScraperService
   end
 
   def fetch_saldo_disponivel
-    url = "#{@login_url.sub(/\/[^\/]*\z/, "")}/ajax_refeicoes.php"
+    require "net/http"
+    require "uri"
 
-    response = @browser.network.post(
-      url,
-      headers: {
-        "Content-Type" => "application/json; charset=UTF-8",
-        "X-Requested-With" => "XMLHttpRequest",
-        "Cookie" => cookies
-      },
-      body: { idsetorconta: 0, acao: "get_refeicoes_compra" }.to_json
-    )
+    base_url = @login_url.sub(/\/[^\/]*\z/, "")
+
+    url = "#{base_url}/cgi-bin/webgiae2.exe/refeicoes"
+    uri = URI.parse(url)
+
+    http = Net::HTTP.new(uri.host, uri.port)
+    http.use_ssl = uri.scheme == "https"
+    http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+
+    request = Net::HTTP::Post.new(uri.path)
+    request["Content-Type"] = "application/json; charset=UTF-8"
+    request["Accept"] = "application/json, text/javascript, */*; q=0.01"
+    request["Referer"] = "#{base_url}/netgiae.html"
+    request["X-Requested-With"] = "XMLHttpRequest"
+    request["Cookie"] = cookies
+    request.body = { idsetorconta: 0, acao: "get_refeicoes_compra" }.to_json
+
+    response = http.request(request)
+
+    Rails.logger.debug "[fetch_saldo] Response code: #{response.code}, body: #{response.body[0..500]}"
+
+    unless response.code == "200" && response.body.start_with?("{")
+      raise "Expected JSON response but got: #{response.code}"
+    end
 
     data = JSON.parse(response.body)
 
-    raw = data.dig("saldos", "valordisponivel") ||
-      raise("valordisponivel not found in response: #{data.inspect}")
+    raw = data.dig("saldocontabilistico") ||
+      data.dig("config", "saldocontabilistico") ||
+      raise("saldocontabilistico not found in response: #{data.inspect}")
 
-    normalized = raw.to_s.delete(".").tr(",", ".")
+    normalized = raw.to_s.gsub(/[^\d,]/, "").tr(",", ".")
     euros = BigDecimal(normalized)
     cents = (euros * 100).to_i
 
@@ -66,7 +83,7 @@ class GiaeScraperService
   end
 
   def cookies
-    @browser.cookies.map { |c| "#{c[:name]}=#{c[:value]}" }.join("; ")
+    @browser.cookies.map { |c| "#{c.name}=#{c.value}" }.join("; ")
   end
 
   private

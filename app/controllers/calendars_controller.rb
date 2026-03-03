@@ -18,6 +18,7 @@ class CalendarsController < ApplicationController
     @user = current_user
 
     RefreshMealTicketsJob.perform_later(@user.id)
+    FetchSaldoDisponivelJob.perform_later(@user.id)
 
     respond_to do |format|
       format.turbo_stream do

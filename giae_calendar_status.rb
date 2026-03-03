@@ -30,7 +30,7 @@ end
 def safe_type(node, text)
   node.focus
   begin
-    node.type([:control, "a"], :backspace)
+    node.type([ :control, "a" ], :backspace)
   rescue StandardError
   end
   node.type(text.to_s)
@@ -44,6 +44,35 @@ end
 
 def portuguese_holiday?(date)
   Holidays.on(date, :pt).any?
+end
+
+# >>> Extracts "Carne" / "Peixe" (or nil) from current page details for given date
+def prato_tipo_for_date(browser, date)
+  # Wait until the date string appears in the details area, e.g. "04-03-2026"
+  formatted_date = date.strftime("%d-%m-%Y")
+  wait_until(timeout: 10) { browser.body.include?(formatted_date) }
+
+  details_doc = Nokogiri::HTML(browser.body)
+
+  # The heading looks like: "Prato Carne (210.00 kcal)" or "Prato Peixe (339.00 kcal)"
+  heading = details_doc.at_xpath(
+    "//h1[contains(., 'Prato ')] | " \
+    "//h2[contains(., 'Prato ')] | " \
+    "//h3[contains(., 'Prato ')] | " \
+    "//h4[contains(., 'Prato ')] | " \
+    "//h5[contains(., 'Prato ')] | " \
+    "//h6[contains(., 'Prato ')]"
+  )
+
+  return nil unless heading
+
+  text = heading.text.strip
+  # Extract the word after "Prato", e.g. "Carne" or "Peixe"
+  if text =~ /Prato\s+(\w+)/
+    Regexp.last_match(1)
+  else
+    nil
+  end
 end
 
 browser = Ferrum::Browser.new(
@@ -138,9 +167,9 @@ begin
   end
 
   month_map = {
-    "Janeiro" => 1, "Fevereiro" => 2, "Março" => 3, "Abril" => 4,
-    "Maio" => 5, "Junho" => 6, "Julho" => 7, "Agosto" => 8,
-    "Setembro" => 9, "Outubro" => 10, "Novembro" => 11, "Dezembro" => 12
+    "Janeiro"  => 1, "Fevereiro" => 2, "Março"    => 3, "Abril"    => 4,
+    "Maio"     => 5, "Junho"     => 6, "Julho"    => 7, "Agosto"   => 8,
+    "Setembro" => 9, "Outubro"   => 10, "Novembro" => 11, "Dezembro" => 12
   }
 
   header_text = doc.text
@@ -168,7 +197,21 @@ begin
     bought  = classes.include?("highlight-green")
     status  = bought ? "BOUGHT" : "not bought"
 
-    puts "#{date}: #{status}"
+    # >>> Click the day in the live browser to load its details
+    # We look up the <a> inside the calendar with this day text, then click it.
+    link_node = browser.at_xpath(
+      "//td[@data-handler='selectDay']/a[normalize-space(text())='#{day_text}']"
+    )
+
+    if link_node
+      safe_click(link_node)
+      tipo = prato_tipo_for_date(browser, date) # "Carne", "Peixe" or nil
+      tipo_str = tipo || "unknown"
+      puts "#{date}: #{status} (Prato #{tipo_str})"
+    else
+      # Fallback if we couldn't find the link for some reason
+      puts "#{date}: #{status} (Prato unknown - link not found)"
+    end
   end
 ensure
   browser.quit
