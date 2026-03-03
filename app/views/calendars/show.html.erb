@@ -1,0 +1,77 @@
+<div class="min-h-screen bg-gray-50">
+  <div class="max-w-md mx-auto px-4 py-6">
+    <div class="flex items-center justify-between mb-6">
+      <h1 class="text-2xl font-bold text-gray-900">Refeições</h1>
+      <%= button_to refresh_calendar_path,
+          method: :post,
+          class: "px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium",
+          data: { turbo_submits_with: "A atualizar..." } do %>
+        Atualizar
+      <% end %>
+    </div>
+
+    <div id="refresh-status">
+      <%= render "refresh_status", user: @user, refreshing: false %>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+      <div class="px-4 py-3 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
+        <%= link_to calendar_path(month: @month > 1 ? @month - 1 : 12, year: @month > 1 ? @year : @year - 1),
+            class: "p-2 hover:bg-gray-200 rounded-lg transition-colors",
+            data: { turbo_action: "replace" } do %>
+          <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+          </svg>
+        <% end %>
+        <h2 class="text-lg font-semibold text-gray-800">
+          <%= I18n.t("date.month_names")[@month] %> <%= @year %>
+        </h2>
+        <%= link_to calendar_path(month: @month < 12 ? @month + 1 : 1, year: @month < 12 ? @year : @year + 1),
+            class: "p-2 hover:bg-gray-200 rounded-lg transition-colors",
+            data: { turbo_action: "replace" } do %>
+          <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+          </svg>
+        <% end %>
+      </div>
+
+      <div class="grid grid-cols-7 gap-px bg-gray-200">
+        <% %w[Seg Ter Qua Qui Sex Sáb Dom].each do |day| %>
+          <div class="bg-gray-50 py-2 text-center text-xs font-medium text-gray-500 uppercase">
+            <%= day %>
+          </div>
+        <% end %>
+
+        <% @calendar_days.each do |day| %>
+          <div class="<%= day_classes(day) %>" <%= tooltip_attributes(day) %>>
+            <% if day[:is_current_month] && !day[:is_weekend] && !day[:is_holiday] %>
+              <% if day[:ticket] %>
+                <div class="<%= day[:ticket].bought ? 'bg-green-500 text-white' : 'bg-gray-300 text-gray-700' %> rounded-full w-7 h-7 flex items-center justify-center text-sm font-medium" title="<%= day[:ticket].bought ? 'Comprado' : 'Não comprado' %>">
+                  <%= day[:date].day %>
+                </div>
+              <% else %>
+                <div class="text-gray-400 text-sm" title="Sem informação"><%= day[:date].day %></div>
+              <% end %>
+            <% else %>
+              <span class="text-gray-300 text-sm"><%= day[:date].day %></span>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <div class="mt-4 flex items-center justify-between text-sm">
+      <div class="flex gap-4">
+        <div class="flex items-center gap-2">
+          <div class="w-4 h-4 bg-green-500 rounded-full"></div>
+          <span class="text-gray-600">Comprado</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="w-4 h-4 bg-gray-300 rounded-full"></div>
+          <span class="text-gray-600">Não comprado</span>
+        </div>
+      </div>
+      <%= link_to "Editar credenciais", edit_account_path, class: "text-blue-600 hover:text-blue-800" %>
+    </div>
+  </div>
+</div>

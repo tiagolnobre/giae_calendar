@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= content_for(:title) || "Giae Calendar" %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="Giae Calendar">
+    <meta name="mobile-web-app-capable" content="yes">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%= yield :head %>
+
+    <link rel="icon" href="/icon.png" type="image/png">
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/icon.png">
+
+    <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+  </head>
+
+  <body class="bg-gray-50">
+    <% if user_signed_in? %>
+      <nav class="bg-white border-b border-gray-200 px-4 py-3">
+        <div class="max-w-md mx-auto flex items-center justify-between">
+          <span class="font-semibold text-gray-800">GIAE</span>
+          <div class="flex items-center gap-4">
+            <div class="relative" data-controller="dropdown">
+              <button type="button" data-action="dropdown#toggle" class="relative text-gray-600 hover:text-gray-800">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+                <% if current_user.notifications.unread.any? %>
+                  <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+                    <%= current_user.notifications.unread.count %>
+                  </span>
+                <% end %>
+              </button>
+              <div data-dropdown-target="menu" class="hidden absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+                <div class="p-3 border-b border-gray-100">
+                  <span class="font-semibold text-gray-800">Notificações</span>
+                </div>
+                <div class="max-h-80 overflow-y-auto">
+                  <% notifications = current_user.notifications.order(created_at: :desc).limit(10) %>
+                  <% if notifications.any? %>
+                    <% notifications.each do |notification| %>
+                      <div class="p-3 border-b border-gray-50 hover:bg-gray-50 <%= notification.read_at ? 'opacity-60' : '' %>">
+                        <p class="text-sm text-gray-800"><%= notification.message %></p>
+                        <p class="text-xs text-gray-500 mt-1"><%= l notification.created_at, format: :short %></p>
+                        <% unless notification.read_at %>
+                          <%= button_to "Marcar lida",
+                              mark_notification_read_path(notification),
+                              method: :patch,
+                              class: "text-xs text-blue-600 hover:text-blue-800 mt-1" %>
+                        <% end %>
+                      </div>
+                    <% end %>
+                  <% else %>
+                    <p class="p-4 text-sm text-gray-500 text-center">Sem notificações</p>
+                  <% end %>
+                </div>
+                <%= link_to "Ver todas", notifications_path, class: "block p-3 text-center text-sm text-blue-600 hover:text-blue-800 border-t border-gray-100" %>
+              </div>
+            </div>
+            <%= button_to sign_out_path,
+                method: :delete,
+                class: "text-sm text-gray-600 hover:text-gray-800" do %>
+              Sair
+            <% end %>
+          </div>
+        </div>
+      </nav>
+    <% end %>
+
+    <% if notice %>
+      <div class="max-w-md mx-auto mt-4 px-4">
+        <div class="bg-green-50 text-green-800 px-4 py-3 rounded-lg text-sm"><%= notice %></div>
+      </div>
+    <% end %>
+
+    <% if alert %>
+      <div class="max-w-md mx-auto mt-4 px-4">
+        <div class="bg-red-50 text-red-800 px-4 py-3 rounded-lg text-sm"><%= alert %></div>
+      </div>
+    <% end %>
+
+    <%= yield %>
+  </body>
+</html>

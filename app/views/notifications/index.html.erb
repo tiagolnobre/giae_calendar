@@ -1,0 +1,29 @@
+<% content_for :title, "Notificações" %>
+
+<div class="max-w-md mx-auto p-4">
+  <h1 class="text-xl font-semibold mb-4">Notificações</h1>
+
+  <% if @notifications.any? %>
+    <div class="space-y-3">
+      <% @notifications.each do |notification| %>
+        <div class="bg-white p-4 rounded-lg shadow-sm border <%= notification.read_at ? 'border-gray-100' : 'border-l-4 border-l-blue-500' %>">
+          <div class="flex items-start justify-between">
+            <div class="flex-1">
+              <p class="text-gray-800"><%= notification.message %></p>
+              <p class="text-sm text-gray-500 mt-1"><%= l notification.created_at, format: :long %></p>
+            </div>
+            <% unless notification.read_at %>
+              <%= button_to mark_notification_read_path(notification),
+                  method: :patch,
+                  class: "text-sm text-blue-600 hover:text-blue-800 ml-2" do %>
+                Marcar lida
+              <% end %>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <p class="text-gray-500 text-center py-8">Não tens notificações.</p>
+  <% end %>
+</div>
