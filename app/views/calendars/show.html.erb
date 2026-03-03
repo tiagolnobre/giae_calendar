@@ -47,7 +47,10 @@
             <% if day[:is_current_month] && !day[:is_weekend] && !day[:is_holiday] %>
               <% if day[:ticket] %>
                 <div class="<%= day[:ticket].bought ? 'bg-green-500 text-white' : 'bg-gray-300 text-gray-700' %> rounded-full w-7 h-7 flex items-center justify-center text-sm font-medium" title="<%= day[:ticket].bought ? 'Comprado' : 'Não comprado' %>">
-                  <%= day[:date].day %>
+                  <span><%= day[:date].day %></span>
+                  <% if day[:ticket].dish_type_icon %>
+                    <span class="text-xs ml-0.5"><%= day[:ticket].dish_type_icon %></span>
+                  <% end %>
                 </div>
               <% else %>
                 <div class="text-gray-400 text-sm" title="Sem informação"><%= day[:date].day %></div>
@@ -69,6 +72,14 @@
         <div class="flex items-center gap-2">
           <div class="w-4 h-4 bg-gray-300 rounded-full"></div>
           <span class="text-gray-600">Não comprado</span>
+        </div>
+        <div class="flex items-center gap-1">
+          <span>🥩</span>
+          <span class="text-gray-600">Carne</span>
+        </div>
+        <div class="flex items-center gap-1">
+          <span>🐟</span>
+          <span class="text-gray-600">Peixe</span>
         </div>
       </div>
       <%= link_to "Editar credenciais", edit_account_path, class: "text-blue-600 hover:text-blue-800" %>

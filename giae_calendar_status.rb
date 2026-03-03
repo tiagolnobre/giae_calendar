@@ -46,15 +46,14 @@ def portuguese_holiday?(date)
   Holidays.on(date, :pt).any?
 end
 
-# >>> Extracts "Carne" / "Peixe" (or nil) from current page details for given date
+# Extracts "Carne"/"Peixe" (or nil) from the details panel for the given date
 def prato_tipo_for_date(browser, date)
-  # Wait until the date string appears in the details area, e.g. "04-03-2026"
   formatted_date = date.strftime("%d-%m-%Y")
+
   wait_until(timeout: 10) { browser.body.include?(formatted_date) }
 
   details_doc = Nokogiri::HTML(browser.body)
 
-  # The heading looks like: "Prato Carne (210.00 kcal)" or "Prato Peixe (339.00 kcal)"
   heading = details_doc.at_xpath(
     "//h1[contains(., 'Prato ')] | " \
     "//h2[contains(., 'Prato ')] | " \
@@ -67,9 +66,8 @@ def prato_tipo_for_date(browser, date)
   return nil unless heading
 
   text = heading.text.strip
-  # Extract the word after "Prato", e.g. "Carne" or "Peixe"
   if text =~ /Prato\s+(\w+)/
-    Regexp.last_match(1)
+    Regexp.last_match(1) # "Carne" or "Peixe"
   else
     nil
   end
@@ -144,9 +142,8 @@ begin
     abort("Timed out waiting for Aquisição de Refeições; saved giae_after_aquisicao_timeout.html")
   end
 
-  # 6) Calendar parsing using td.highlight / td.highlight-green
+  # 6) Calendar parsing
 
-  # Wait for at least one calendar cell to appear (JS can be slow)
   log "Waiting for calendar cells"
   wait_until(timeout: 30) do
     Nokogiri::HTML(browser.body).css("td[data-handler='selectDay']").any?
@@ -167,51 +164,67 @@ begin
   end
 
   month_map = {
-    "Janeiro"  => 1, "Fevereiro" => 2, "Março"    => 3, "Abril"    => 4,
-    "Maio"     => 5, "Junho"     => 6, "Julho"    => 7, "Agosto"   => 8,
+    "Janeiro"  => 1, "Fevereiro" => 2, "Março"     => 3, "Abril"    => 4,
+    "Maio"     => 5, "Junho"     => 6, "Julho"     => 7, "Agosto"   => 8,
     "Setembro" => 9, "Outubro"   => 10, "Novembro" => 11, "Dezembro" => 12
   }
 
   header_text = doc.text
   month_name  = month_map.keys.find { |m| header_text.include?(m) }
 
-  # Always use current year, ignore year from the page
   year  = Date.today.year
   month = month_name ? month_map[month_name] : Date.today.month
 
   log "Analysing calendar for #{month_name || month}/#{year}"
 
-  day_cells.each do |cell|
-    day_text = cell.at_css("a")&.text&.strip
-    next unless day_text&.match?(/\A\d+\z/)
+  # Work from a list of day numbers, not nodes
+  day_numbers = day_cells.map { |cell| cell.at_css("a")&.text&.strip }.compact
+
+  day_numbers.each do |day_text|
+    next unless day_text.match?(/\A\d+\z/)
 
     day  = day_text.to_i
     date = Date.new(year, month, day)
 
-    # Only weekdays
     next if date.saturday? || date.sunday?
-    # Skip Portuguese bank holidays via holidays gem
     next if portuguese_holiday?(date)
 
-    classes = cell["class"].to_s.split
+    # Re-parse current DOM to get state for this day
+    current_doc  = Nokogiri::HTML(browser.body)
+    current_cell = current_doc.at_xpath(
+      "//td[@data-handler='selectDay']/a[normalize-space(text())='#{day_text}']/.."
+    )
+
+    unless current_cell
+      puts "#{date}: unknown (Prato unknown - day cell not found)"
+      next
+    end
+
+    classes = current_cell["class"].to_s.split
     bought  = classes.include?("highlight-green")
     status  = bought ? "BOUGHT" : "not bought"
 
-    # >>> Click the day in the live browser to load its details
-    # We look up the <a> inside the calendar with this day text, then click it.
+    # Find live Ferrum node and click
     link_node = browser.at_xpath(
       "//td[@data-handler='selectDay']/a[normalize-space(text())='#{day_text}']"
     )
 
-    if link_node
-      safe_click(link_node)
-      tipo = prato_tipo_for_date(browser, date) # "Carne", "Peixe" or nil
-      tipo_str = tipo || "unknown"
-      puts "#{date}: #{status} (Prato #{tipo_str})"
-    else
-      # Fallback if we couldn't find the link for some reason
-      puts "#{date}: #{status} (Prato unknown - link not found)"
+    unless link_node
+      puts "#{date}: #{status} (Prato unknown - live link not found)"
+      next
     end
+
+    begin
+      safe_click(link_node)
+    rescue Ferrum::NodeNotFoundError
+      puts "#{date}: #{status} (Prato unknown - node became stale)"
+      next
+    end
+
+    tipo     = prato_tipo_for_date(browser, date) # "Carne", "Peixe" or nil
+    tipo_str = tipo || "unknown"
+
+    puts "#{date}: #{status} (Prato #{tipo_str})"
   end
 ensure
   browser.quit

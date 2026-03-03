@@ -10,13 +10,15 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_03_020000) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_03_030000) do
   create_table "meal_tickets", force: :cascade do |t|
     t.boolean "bought"
     t.datetime "created_at", null: false
     t.date "date"
+    t.string "dish_type"
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
+    t.index ["dish_type"], name: "index_meal_tickets_on_dish_type"
     t.index ["user_id", "date"], name: "index_meal_tickets_on_user_id_and_date", unique: true
     t.index ["user_id"], name: "index_meal_tickets_on_user_id"
   end

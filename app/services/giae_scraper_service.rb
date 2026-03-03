@@ -176,10 +176,39 @@ class GiaeScraperService
       classes = cell["class"].to_s.split
       bought = classes.include?("highlight-green")
 
-      results << { date: date, bought: bought }
+      dish_type = get_dish_type_for_day(day_text)
+
+      results << { date: date, bought: bought, dish_type: dish_type }
     end
 
     results
+  end
+
+  def get_dish_type_for_day(day_text)
+    link_node = @browser.at_xpath("//td[@data-handler='selectDay']/a[normalize-space(text())='#{day_text}']")
+    return nil unless link_node
+
+    begin
+      safe_click(link_node)
+      sleep 0.5
+    rescue Ferrum::NodeNotFoundError
+      return nil
+    end
+
+    extract_dish_type_from_page
+  rescue => e
+    Rails.logger.debug "[get_dish_type] Error: #{e.message}"
+    nil
+  end
+
+  def extract_dish_type_from_page
+    body = @browser.body
+
+    if body.include?("Carne") && !body.include?("Peixe")
+      "meat"
+    elsif body.include?("Peixe")
+      "fish"
+    end
   end
 
   def save_screenshot(name)

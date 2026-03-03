@@ -45,6 +45,7 @@ class RefreshMealTicketsJob < ApplicationJob
           date: result[:date]
         )
         ticket.bought = result[:bought]
+        ticket.dish_type = result[:dish_type]
         ticket.save!
       end
     end
