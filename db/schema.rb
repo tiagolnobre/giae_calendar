@@ -10,7 +10,43 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_03_030000) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_05_173001) do
+  create_table "giae_sessions", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "error_message"
+    t.datetime "expires_at"
+    t.datetime "last_used_at"
+    t.string "lock_key"
+    t.datetime "locked_at"
+    t.string "locked_by"
+    t.datetime "obtained_at"
+    t.datetime "refreshed_at"
+    t.text "session_cookie_ciphertext"
+    t.integer "status", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["expires_at"], name: "index_giae_sessions_on_expires_at"
+    t.index ["lock_key"], name: "index_giae_sessions_on_lock_key", unique: true, where: "lock_key IS NOT NULL"
+    t.index ["updated_at"], name: "index_giae_sessions_on_updated_at"
+    t.index ["user_id", "status"], name: "index_giae_sessions_on_user_id_and_status"
+    t.index ["user_id"], name: "index_giae_sessions_on_user_id"
+  end
+
+  create_table "meal_details", force: :cascade do |t|
+    t.string "bread"
+    t.datetime "created_at", null: false
+    t.date "date", null: false
+    t.string "dessert"
+    t.string "main_dish"
+    t.string "period", null: false
+    t.string "soup"
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.string "vegetables"
+    t.index ["user_id", "date"], name: "index_meal_details_on_user_id_and_date", unique: true
+    t.index ["user_id"], name: "index_meal_details_on_user_id"
+  end
+
   create_table "meal_tickets", force: :cascade do |t|
     t.boolean "bought"
     t.datetime "created_at", null: false
@@ -121,6 +157,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_03_030000) do
     t.string "schedule", null: false
     t.boolean "static", default: true, null: false
     t.datetime "updated_at", null: false
+    t.index ["key"], name: "index_solid_queue_recurring_tasks_on_key", unique: true
   end
 
   create_table "solid_queue_scheduled_executions", force: :cascade do |t|
@@ -145,15 +182,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_03_030000) do
     t.boolean "email_notifications_enabled", default: true
     t.string "giae_password"
     t.text "giae_password_ciphertext"
+    t.string "giae_school_code"
     t.string "giae_username"
     t.text "giae_username_ciphertext"
     t.boolean "in_app_notifications_enabled", default: true
     t.datetime "last_refreshed_at"
     t.string "password_digest", default: "", null: false
+    t.datetime "remember_created_at"
+    t.string "remember_token"
     t.datetime "updated_at", null: false
     t.index ["email"], name: "index_users_on_email", unique: true
   end
 
+  add_foreign_key "giae_sessions", "users"
+  add_foreign_key "meal_details", "users"
   add_foreign_key "meal_tickets", "users"
   add_foreign_key "notifications", "users"
   add_foreign_key "saldo_records", "users"

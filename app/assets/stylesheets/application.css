@@ -8,3 +8,7 @@
  *
  * Consider organizing styles into separate files for maintainability.
  */
+
+.today-bg {
+  background-color: #FFF2D0;
+}

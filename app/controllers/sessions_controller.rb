@@ -14,15 +14,21 @@ class SessionsController < ApplicationController
 
     if user&.authenticate(params[:password])
       sign_in(user)
-      redirect_to calendar_path, notice: "Signed in successfully."
+
+      # Set remember me cookie if requested
+      if params[:remember_me] == "1"
+        remember_user(user)
+      end
+
+      redirect_to calendar_path, notice: t("flash.signed_in")
     else
-      flash.now[:alert] = "Invalid email or password."
+      flash.now[:alert] = t("flash.invalid_credentials")
       render :new, status: :unprocessable_entity
     end
   end
 
   def destroy
     sign_out
-    redirect_to sign_in_path, notice: "Signed out successfully."
+    redirect_to sign_in_path, notice: t("flash.signed_out")
   end
 end

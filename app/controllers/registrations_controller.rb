@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class RegistrationsController < ApplicationController
-  skip_before_action :authenticate_user!, raise: false
+  skip_before_action :authenticate_user!, raise: false, only: [ :new, :create ]
 
   def new
     @user = User.new
@@ -12,7 +12,7 @@ class RegistrationsController < ApplicationController
 
     if @user.save
       sign_in(@user)
-      redirect_to calendar_path, notice: "Account created successfully."
+      redirect_to calendar_path, notice: t("flash.account_created")
     else
       render :new, status: :unprocessable_entity
     end
@@ -26,7 +26,7 @@ class RegistrationsController < ApplicationController
     @user = current_user
 
     if @user.update(user_params)
-      redirect_to calendar_path, notice: "Account updated successfully."
+      redirect_to calendar_path, notice: t("flash.account_updated")
     else
       render :edit, status: :unprocessable_entity
     end

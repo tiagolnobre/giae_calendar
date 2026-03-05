@@ -1,0 +1,8 @@
+#!/bin/bash
+# Start both web server and worker in the same container
+
+# Start Solid Queue worker in background
+bundle exec rake solid_queue:start &
+
+# Start web server
+exec bin/rails server -p 8080

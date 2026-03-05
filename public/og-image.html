@@ -1,0 +1,70 @@
+<!doctype html>
+<html>
+  <head>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        width: 1200px;
+        height: 630px;
+        background: linear-gradient(135deg, #012a4a 0%, #034c8c 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family:
+          system-ui,
+          -apple-system,
+          sans-serif;
+      }
+      .container {
+        display: flex;
+        align-items: center;
+        gap: 40px;
+      }
+      .logo {
+        width: 180px;
+        height: 180px;
+      }
+      .text {
+        color: white;
+      }
+      h1 {
+        font-size: 72px;
+        font-weight: 800;
+        letter-spacing: 2px;
+        margin-bottom: 16px;
+      }
+      p {
+        font-size: 28px;
+        opacity: 0.9;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <svg class="logo" viewBox="0 0 64 64">
+        <rect x="0" y="0" width="64" height="64" rx="6" ry="6" fill="white" />
+        <text
+          x="50%"
+          y="55%"
+          text-anchor="middle"
+          dominant-baseline="middle"
+          font-family="system-ui, -apple-system, sans-serif"
+          font-weight="800"
+          font-size="22"
+          letter-spacing="1"
+          fill="#012a4a"
+        >
+          GIAE
+        </text>
+      </svg>
+      <div class="text">
+        <h1>GIAE Calendar</h1>
+        <p>Calendário de refeições</p>
+      </div>
+    </div>
+  </body>
+</html>

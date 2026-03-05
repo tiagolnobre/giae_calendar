@@ -3,10 +3,23 @@ default: &default
   max_connections: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
   timeout: 5000
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  # SQLite3 specific settings
+  pragmas:
+    # Improve SQLite performance
+    journal_mode: 'wal'
+    synchronous: 'normal'
+    temp_store: 'memory'
+    mmap_size: '30000000000'
+    busy_timeout: 5000
 
 development:
   <<: *default
   database: storage/development.sqlite3
+  # Solid Queue will use main database by default
+  # queue:
+  #   <<: *default
+  #   database: storage/development_queue.sqlite3
+  #   migrations_paths: db/queue_migrate
 
 test:
   <<: *default
@@ -14,4 +27,6 @@ test:
 
 production:
   <<: *default
-  database: <%= ENV.fetch("DATABASE_PATH", "storage") %>/production.sqlite3
+  database: /data/production.sqlite3
+  # Production uses single database for all data including Solid Queue
+  # This ensures data consistency and simplifies backups

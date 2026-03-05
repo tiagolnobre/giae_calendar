@@ -76,3 +76,5 @@ gem "litestream", "~> 0.14.0"
 gem "solid_queue"
 
 gem "aws-sdk-s3", "~> 1.213", require: false
+
+gem "lucide-rails"

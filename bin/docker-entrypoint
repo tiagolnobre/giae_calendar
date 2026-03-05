@@ -5,4 +5,9 @@ if [ "${@: -2:1}" == "./bin/rails" ] && [ "${@: -1:1}" == "server" ]; then
   ./bin/rails db:prepare
 fi
 
+# Start Solid Queue worker in background
+if [ "$RAILS_ENV" = "production" ]; then
+  bundle exec rake solid_queue:start &
+fi
+
 exec "${@}"

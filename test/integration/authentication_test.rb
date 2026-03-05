@@ -6,7 +6,6 @@ class AuthenticationTest < ActionDispatch::IntegrationTest
       email: "test@example.com",
       password: "password123",
       password_confirmation: "password123",
-      giae_login_url: "https://test.giae.pt",
       giae_username: "testuser",
       giae_password: "testpass"
     )
@@ -15,13 +14,13 @@ class AuthenticationTest < ActionDispatch::IntegrationTest
   test "should get sign in page" do
     get sign_in_path
     assert_response :success
-    assert_select "h1", "GIAE Calendar"
+    assert_select "h1", I18n.t("app_name")
   end
 
   test "should get sign up page" do
     get sign_up_path
     assert_response :success
-    assert_select "h1", "GIAE Calendar"
+    assert_select "h1", I18n.t("app_name")
   end
 
   test "should sign in with valid credentials" do
@@ -29,9 +28,9 @@ class AuthenticationTest < ActionDispatch::IntegrationTest
       email: "test@example.com",
       password: "password123"
     }
-    assert_redirected_to calendar_path
+    assert_redirected_to %r{/calendar}
     follow_redirect!
-    assert_select "h1", "Refeições"
+    assert_select "h1", I18n.t("calendar.meals")
   end
 
   test "should not sign in with invalid email" do
@@ -57,13 +56,12 @@ class AuthenticationTest < ActionDispatch::IntegrationTest
           email: "new@example.com",
           password: "password123",
           password_confirmation: "password123",
-          giae_login_url: "https://test.giae.pt",
           giae_username: "newuser",
           giae_password: "newpass"
         }
       }
     end
-    assert_redirected_to calendar_path
+    assert_redirected_to %r{/calendar}
   end
 
   test "should not sign up with duplicate email" do
@@ -72,21 +70,6 @@ class AuthenticationTest < ActionDispatch::IntegrationTest
         email: "test@example.com",
         password: "password123",
         password_confirmation: "password123",
-        giae_login_url: "https://test.giae.pt",
-        giae_username: "user",
-        giae_password: "pass"
-      }
-    }
-    assert_response :unprocessable_entity
-  end
-
-  test "should not sign up without GIAE login url" do
-    post sign_up_path, params: {
-      user: {
-        email: "new@example.com",
-        password: "password123",
-        password_confirmation: "password123",
-        giae_login_url: "",
         giae_username: "user",
         giae_password: "pass"
       }
@@ -100,11 +83,11 @@ class AuthenticationTest < ActionDispatch::IntegrationTest
       password: "password123"
     }
     delete sign_out_path
-    assert_redirected_to sign_in_path
+    assert_redirected_to %r{/sign_in}
   end
 
   test "should require authentication for calendar" do
     get calendar_path
-    assert_redirected_to sign_in_path
+    assert_redirected_to %r{/sign_in}
   end
 end

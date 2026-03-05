@@ -1,7 +1,7 @@
 <div class="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-8">
   <div class="max-w-md w-full">
     <div class="text-center mb-8">
-      <h1 class="text-2xl font-bold text-gray-900">Editar Conta</h1>
+      <h1 class="text-2xl font-bold text-gray-900"><%= t("account.edit_account") %></h1>
     </div>
 
     <div class="bg-white rounded-xl shadow-sm p-6">
@@ -17,54 +17,54 @@
         <% end %>
 
         <div>
-          <%= f.label :email, class: "block text-sm font-medium text-gray-700" %>
+          <%= f.label :email, t("session.email"), class: "block text-sm font-medium text-gray-700" %>
           <%= f.email_field :email, class: "mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" %>
         </div>
 
         <div class="border-t pt-4">
-          <h3 class="text-lg font-medium text-gray-900 mb-3">Credenciais GIAE</h3>
+          <h3 class="text-lg font-medium text-gray-900 mb-3">GIAE</h3>
           
           <div class="space-y-3">
             <div>
-              <%= f.label :giae_username, "Utilizador / Nº Cartão", class: "block text-sm font-medium text-gray-700" %>
+              <%= f.label :giae_username, t("registration.giae_username"), class: "block text-sm font-medium text-gray-700" %>
               <%= f.text_field :giae_username, class: "mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" %>
             </div>
 
             <div>
-              <%= f.label :giae_password, "Palavra-passe", class: "block text-sm font-medium text-gray-700" %>
+              <%= f.label :giae_password, t("registration.giae_password"), class: "block text-sm font-medium text-gray-700" %>
               <%= f.password_field :giae_password, class: "mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" %>
             </div>
           </div>
         </div>
 
         <div class="border-t pt-4">
-          <h3 class="text-lg font-medium text-gray-900 mb-3">Alterar Palavra-passe</h3>
+          <h3 class="text-lg font-medium text-gray-900 mb-3"><%= t("account.change_password") %></h3>
           
           <div class="space-y-3">
             <div>
-              <%= f.label :password, "Nova palavra-passe", class: "block text-sm font-medium text-gray-700" %>
-              <%= f.password_field :password, autocomplete: "new-password", placeholder: "Deixe em branco para não alterar", class: "mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" %>
+              <%= f.label :password, t("session.password"), class: "block text-sm font-medium text-gray-700" %>
+              <%= f.password_field :password, autocomplete: "new-password", placeholder: t("registration.leave_blank"), class: "mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" %>
             </div>
 
             <div>
-              <%= f.label :password_confirmation, "Confirmar palavra-passe", class: "block text-sm font-medium text-gray-700" %>
+              <%= f.label :password_confirmation, t("registration.confirm_password"), class: "block text-sm font-medium text-gray-700" %>
               <%= f.password_field :password_confirmation, autocomplete: "new-password", class: "mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" %>
             </div>
           </div>
         </div>
 
         <div class="flex gap-3">
-          <%= f.submit "Guardar alterações", class: "flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium" %>
+          <%= f.submit t("account.update_account"), class: "flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium" %>
         </div>
       <% end %>
 
       <div class="mt-6 pt-6 border-t">
-        <%= button_to "Terminar sessão", sign_out_path, method: :delete, class: "w-full bg-gray-100 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-200 transition-colors" %>
+        <%= button_to t("nav.sign_out"), sign_out_path, method: :delete, class: "w-full bg-gray-100 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-200 transition-colors" %>
       </div>
     </div>
 
     <div class="mt-4 text-center">
-      <%= link_to "Voltar", root_path, class: "text-blue-600 hover:text-blue-800" %>
+      <%= link_to "← " + t("nav.back"), root_path, class: "text-blue-600 hover:text-blue-800" %>
     </div>
   </div>
 </div>

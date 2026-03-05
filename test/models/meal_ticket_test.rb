@@ -6,7 +6,6 @@ class MealTicketTest < ActiveSupport::TestCase
       email: "test@example.com",
       password: "password123",
       password_confirmation: "password123",
-      giae_login_url: "https://test.giae.pt",
       giae_username: "testuser",
       giae_password: "testpass"
     )
@@ -49,7 +48,6 @@ class MealTicketTest < ActiveSupport::TestCase
       email: "other@example.com",
       password: "password123",
       password_confirmation: "password123",
-      giae_login_url: "https://test.giae.pt",
       giae_username: "other",
       giae_password: "pass"
     )

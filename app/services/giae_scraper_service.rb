@@ -1,74 +1,51 @@
 # frozen_string_literal: true
 
 require "bigdecimal"
+require "net/http"
+require "uri"
+require "json"
 
 class GiaeScraperService
   class Error < StandardError; end
   class LoginError < Error; end
-  class NavigationError < Error; end
-  class CalendarParseError < Error; end
+  class SessionExpired < Error; end
 
-  MONTH_MAP = {
-    "Janeiro" => 1, "Fevereiro" => 2, "Março" => 3, "Abril" => 4,
-    "Maio" => 5, "Junho" => 6, "Julho" => 7, "Agosto" => 8,
-    "Setembro" => 9, "Outubro" => 10, "Novembro" => 11, "Dezembro" => 12
-  }.freeze
+  # Default school code for GIAE
+  DEFAULT_SCHOOL_CODE = "161676"
 
-  def initialize(username:, password:, login_url:, headless: true)
+  def initialize(username:, password:, login_url:, school_code: nil, session_cookie: nil)
     @username = username
     @password = password
     @login_url = login_url
-    @headless = headless
-    @browser = nil
+    @school_code = school_code || DEFAULT_SCHOOL_CODE
+    @base_url = @login_url.sub(/\/[^\/]*\z/, "")
+    @cookies = session_cookie  # Use provided session or nil
   end
 
   def call
-    setup_browser
-    login
-    navigate_to_calendar
-    parse_calendar
-  rescue Error
-    save_screenshot("error_#{Time.now.strftime("%Y%m%d_%H%M%S")}") if @browser && Rails.env.development?
-    raise
-  ensure
-    @browser&.quit
+    login!
+    fetch_refeicoes_compra
   end
 
   def login!
-    setup_browser
-    login
+    # Skip if we already have a session cookie
+    return self if logged_in?
+
+    response = perform_login
+    @cookies = extract_cookies(response)
+    raise(LoginError, "Login failed - no session cookie received") unless @cookies
     self
   end
 
+  def logged_in?
+    @cookies.present?
+  end
+
   def fetch_saldo_disponivel
-    require "net/http"
-    require "uri"
+    url = "#{@base_url}/cgi-bin/webgiae2.exe/refeicoes"
+    body = { idsetorconta: 0, acao: "get_refeicoes_compra" }.to_json
 
-    base_url = @login_url.sub(/\/[^\/]*\z/, "")
-
-    url = "#{base_url}/cgi-bin/webgiae2.exe/refeicoes"
-    uri = URI.parse(url)
-
-    http = Net::HTTP.new(uri.host, uri.port)
-    http.use_ssl = uri.scheme == "https"
-    http.verify_mode = OpenSSL::SSL::VERIFY_NONE
-
-    request = Net::HTTP::Post.new(uri.path)
-    request["Content-Type"] = "application/json; charset=UTF-8"
-    request["Accept"] = "application/json, text/javascript, */*; q=0.01"
-    request["Referer"] = "#{base_url}/netgiae.html"
-    request["X-Requested-With"] = "XMLHttpRequest"
-    request["Cookie"] = cookies
-    request.body = { idsetorconta: 0, acao: "get_refeicoes_compra" }.to_json
-
-    response = http.request(request)
-
-    Rails.logger.debug "[fetch_saldo] Response code: #{response.code}, body: #{response.body[0..500]}"
-
-    unless response.code == "200" && response.body.start_with?("{")
-      raise "Expected JSON response but got: #{response.code}"
-    end
-
+    response = post_request(url, body)
     data = JSON.parse(response.body)
 
     raw = data.dig("saldocontabilistico") ||
@@ -82,101 +59,23 @@ class GiaeScraperService
     { euros: euros, cents: cents }
   end
 
-  def cookies
-    @browser.cookies.map { |c| "#{c.name}=#{c.value}" }.join("; ")
-  end
+  def fetch_refeicoes_compra
+    url = "#{@base_url}/cgi-bin/webgiae2.exe/refeicoes"
+    body = { idsetorconta: 0, acao: "get_refeicoes_compra" }.to_json
 
-  private
+    response = post_request(url, body)
+    data = JSON.parse(response.body)
 
-  def setup_browser
-    @browser = Ferrum::Browser.new(
-      timeout: 180,
-      process_timeout: 30,
-      headless: @headless
-    )
-  end
-
-  def login
-    @browser.goto(@login_url)
-
-    wait_until(60) { @browser.body.include?("AUTENTICAÇÃO") } ||
-      raise(LoginError, "Timed out waiting for AUTENTICAÇÃO")
-
-    user_input = wait_until(60) { @browser.at_css("#username") }
-    pass_input = wait_until(60) { @browser.at_css("#password") }
-
-    raise(LoginError, "Username input (#username) not found") unless user_input
-    raise(LoginError, "Password input (#password) not found") unless pass_input
-
-    safe_type(user_input, @username)
-    safe_type(pass_input, @password)
-
-    if (body_node = @browser.at_xpath("//body"))
-      safe_click(body_node)
-    end
-
-    entrar_btn = @browser.at_xpath("//*[contains(normalize-space(text()), 'Entrar')]")
-    raise(LoginError, "Entrar button not found") unless entrar_btn
-
-    safe_click(entrar_btn)
-
-    wait_until(60) { @browser.body.include?("Bem-vindo ao netGIAE.") } ||
-      raise(LoginError, "Timed out waiting for 'Bem-vindo ao netGIAE.'")
-  end
-
-  def navigate_to_calendar
-    refeicoes_node = wait_until(60) do
-      @browser.at_xpath("//*[contains(normalize-space(text()), 'Refeições')]")
-    end
-    raise(NavigationError, "Refeições menu not found") unless refeicoes_node
-    safe_click(refeicoes_node)
-
-    aquis_node = wait_until(60) do
-      @browser.at_xpath("//*[contains(normalize-space(text()), 'Aquisição')]")
-    end
-    raise(NavigationError, "Aquisição menu not found") unless aquis_node
-    safe_click(aquis_node)
-
-    wait_until(120) do
-      body = @browser.body
-      body.include?("Aquisição de Refeições") &&
-        body.include?("Aquisição de refeições.")
-    end || raise(NavigationError, "Timed out waiting for Aquisição de Refeições")
-  end
-
-  def parse_calendar
-    wait_until(60) do
-      Nokogiri::HTML(@browser.body).css("td[data-handler='selectDay']").any?
-    end || raise(CalendarParseError, "Timed out waiting for calendar cells")
-
-    html = @browser.body
-    doc = Nokogiri::HTML(html)
-
-    day_cells = doc.css("td[data-handler='selectDay']")
-    raise(CalendarParseError, "No day cells found") if day_cells.empty?
-
-    header_text = doc.text
-    month_name = MONTH_MAP.keys.find { |m| header_text.include?(m) }
-
-    year = Date.today.year
-    month = month_name ? MONTH_MAP[month_name] : Date.today.month
-
+    refeicoes = parse_refeicoes(data["refeicoes"])
     results = []
 
-    day_cells.each do |cell|
-      day_text = cell.at_css("a")&.text&.strip
-      next unless day_text&.match?(/\A\d+\z/)
-
-      day = day_text.to_i
-      date = Date.new(year, month, day)
-
+    refeicoes.each do |ref|
+      date = Date.parse(ref["data"])
       next if date.saturday? || date.sunday?
       next if portuguese_holiday?(date)
 
-      classes = cell["class"].to_s.split
-      bought = classes.include?("highlight-green")
-
-      dish_type = get_dish_type_for_day(day_text)
+      bought = ref["comprada"] == true || ref["comprada"] == "true"
+      dish_type = extract_dish_type(ref["descricaoprato"])
 
       results << { date: date, bought: bought, dish_type: dish_type }
     end
@@ -184,64 +83,132 @@ class GiaeScraperService
     results
   end
 
-  def get_dish_type_for_day(day_text)
-    link_node = @browser.at_xpath("//td[@data-handler='selectDay']/a[normalize-space(text())='#{day_text}']")
-    return nil unless link_node
+  def fetch_meal_details
+    url = "#{@base_url}/cgi-bin/webgiae2.exe/refeicoes"
+    body = { acao: "get_ementas" }.to_json
 
-    begin
-      safe_click(link_node)
-      sleep 0.5
-    rescue Ferrum::NodeNotFoundError
-      return nil
+    response = post_request(url, body)
+    data = JSON.parse(response.body)
+
+    refeicoes = parse_refeicoes(data["refeicoes"])
+
+    refeicoes.each_with_object({}) do |ref, acc|
+      date = Date.parse(ref["data"])
+
+      acc[date] = {
+        descricaoperiodo: ref["descricaoperiodo"],
+        soup: ref["sopa"],
+        main_dish: ref["prato"],
+        vegetables: ref["vegetais"],
+        dessert: ref["sobremesa"],
+        bread: ref["pao"]
+      }
     end
-
-    extract_dish_type_from_page
-  rescue => e
-    Rails.logger.debug "[get_dish_type] Error: #{e.message}"
-    nil
   end
 
-  def extract_dish_type_from_page
-    body = @browser.body
+  attr_reader :cookies
 
-    if body.include?("Carne") && !body.include?("Peixe")
+  private
+
+  def perform_login
+    url = "#{@base_url}/cgi-bin/webgiae2.exe/loginv2"
+
+    body = {
+      modo: "manual",
+      escola: @school_code,
+      nrcartao: @username,
+      codigo: @password,
+      urlrecuperacao: @login_url
+    }.to_json
+
+    post_request(url, body, skip_auth: true)
+  end
+
+  def post_request(url, body, skip_auth: false)
+    uri = URI.parse(url)
+
+    http = Net::HTTP.new(uri.host, uri.port)
+    http.use_ssl = uri.scheme == "https"
+    http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+
+    request = Net::HTTP::Post.new(uri.path)
+    request["Content-Type"] = "application/json"
+    request["Accept"] = "application/json, text/javascript, */*; q=0.01"
+    request["Origin"] = @base_url
+    request["Referer"] = @login_url
+    request["X-Requested-With"] = "XMLHttpRequest"
+
+    unless skip_auth
+      raise(Error, "Not logged in. Call login! first.") unless @cookies
+      request["Cookie"] = @cookies
+    end
+
+    request.body = body
+
+    response = http.request(request)
+
+    Rails.logger.debug "[GiaeScraperService] POST #{url} - Response: #{response.code}"
+
+    # Detect session expiration
+    if response.code == "401" || session_expired_response?(response.body)
+      raise SessionExpired, "Session has expired (HTTP #{response.code})"
+    end
+
+    unless response.code == "200"
+      raise("Request failed with status: #{response.code}, body: #{response.body[0..200]}")
+    end
+
+    response
+  end
+
+  def session_expired_response?(body)
+    return false unless body.present?
+
+    # Convert to UTF-8 with error handling for binary responses
+    body_utf8 = body.to_s.encode("UTF-8", invalid: :replace, undef: :replace, replace: "?")
+
+    # Check for common session expiration indicators
+    indicators = [
+      "sessao expirada",
+      "session expired",
+      "sessão expirada",
+      "nao autenticado",
+      "não autenticado",
+      "not authenticated"
+    ]
+
+    indicators.any? { |indicator| body_utf8.downcase.include?(indicator) }
+  end
+
+  def extract_cookies(response)
+    cookies = response.get_fields("set-cookie")
+    return nil unless cookies
+
+    cookies.map do |cookie|
+      cookie.split(";").first.strip
+    end.join("; ")
+  end
+
+  def parse_refeicoes(refeicoes_raw)
+    case refeicoes_raw
+    when String
+      JSON.parse(refeicoes_raw)
+    when Array
+      refeicoes_raw
+    else
+      raise "Unexpected refeicoes type: #{refeicoes_raw.class}"
+    end
+  end
+
+  def extract_dish_type(descricaoprato)
+    return nil if descricaoprato.blank?
+
+    descricaoprato_down = descricaoprato.downcase
+    if descricaoprato_down.include?("carne")
       "meat"
-    elsif body.include?("Peixe")
+    elsif descricaoprato_down.include?("peixe")
       "fish"
     end
-  end
-
-  def save_screenshot(name)
-    return unless @browser
-
-    filename = Rails.root.join("tmp", "#{name}.png")
-    @browser.screenshot(path: filename.to_s, full: true)
-    Rails.logger.info "[GiaeScraperService] Screenshot saved to #{filename}"
-  end
-
-  def wait_until(timeout, interval = 0.3)
-    deadline = Time.now + timeout
-    until Time.now > deadline
-      result = yield
-      return result if result
-      sleep interval
-    end
-    nil
-  end
-
-  def safe_type(node, text)
-    node.focus
-    begin
-      node.type([ :control, "a" ], :backspace)
-    rescue
-    end
-    node.type(text.to_s)
-  end
-
-  def safe_click(node)
-    node.click
-  rescue Ferrum::CoordinatesNotFoundError
-    node.evaluate("this.click()")
   end
 
   def portuguese_holiday?(date)

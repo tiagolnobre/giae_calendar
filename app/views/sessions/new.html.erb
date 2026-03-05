@@ -1,8 +1,12 @@
 <div class="min-h-screen bg-gray-50 flex items-center justify-center px-4">
   <div class="max-w-md w-full">
     <div class="text-center mb-8">
-      <h1 class="text-3xl font-bold text-gray-900">GIAE Calendar</h1>
-      <p class="mt-2 text-gray-600">Aceder à sua conta</p>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" class="h-16 w-16 mx-auto">
+        <rect x="0" y="0" width="64" height="64" rx="6" ry="6" fill="#012a4a"/>
+        <text x="50%" y="55%" text-anchor="middle" dominant-baseline="middle" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-weight="800" font-size="22" letter-spacing="1" fill="#ffffff">GIAE</text>
+      </svg>
+      <h1 class="text-3xl font-bold text-gray-900 mt-4"><%= t("app_name") %></h1>
+      <p class="mt-2 text-gray-600"><%= t("session.access_account") %></p>
     </div>
 
     <div class="bg-white rounded-xl shadow-sm p-6">
@@ -12,23 +16,28 @@
         <% end %>
 
         <div>
-          <%= f.label :email, class: "block text-sm font-medium text-gray-700" %>
+          <%= f.label :email, t("session.email"), class: "block text-sm font-medium text-gray-700" %>
           <%= f.email_field :email, autofocus: true, autocomplete: "email", class: "mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" %>
         </div>
 
         <div>
-          <%= f.label :password, class: "block text-sm font-medium text-gray-700" %>
+          <%= f.label :password, t("session.password"), class: "block text-sm font-medium text-gray-700" %>
           <%= f.password_field :password, autocomplete: "current-password", class: "mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" %>
         </div>
 
-        <%= f.submit "Entrar", class: "w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium" %>
+        <div class="flex items-center">
+          <%= f.check_box :remember_me, class: "h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" %>
+          <%= f.label :remember_me, t("session.remember_me"), class: "ml-2 block text-sm text-gray-900" %>
+        </div>
+
+        <%= f.submit t("session.sign_in"), class: "w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium" %>
       <% end %>
     </div>
 
     <div class="mt-4 text-center">
       <p class="text-sm text-gray-600">
-        Não tem conta?
-        <%= link_to "Criar conta", sign_up_path, class: "text-blue-600 hover:text-blue-800" %>
+        <%= t("session.no_account") %>
+        <%= link_to t("session.create_account"), sign_up_path, class: "text-blue-600 hover:text-blue-800" %>
       </p>
     </div>
   </div>

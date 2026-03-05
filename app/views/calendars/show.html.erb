@@ -1,18 +1,57 @@
 <div class="min-h-screen bg-gray-50">
   <div class="max-w-md mx-auto px-4 py-6">
     <div class="flex items-center justify-between mb-6">
-      <h1 class="text-2xl font-bold text-gray-900">Refeições</h1>
+      <h1 class="text-2xl font-bold text-gray-900"><%= t("calendar.meals") %></h1>
       <%= button_to refresh_calendar_path,
           method: :post,
-          class: "px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium",
-          data: { turbo_submits_with: "A atualizar..." } do %>
-        Atualizar
+          class: "px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium #{@user.refresh_in_progress? ? 'opacity-50 cursor-not-allowed' : ''}",
+          data: { turbo_submits_with: t("calendar.refreshing") },
+          disabled: @user.refresh_in_progress? do %>
+        <%= t("calendar.refresh") %>
       <% end %>
     </div>
 
     <div id="refresh-status">
-      <%= render "refresh_status", user: @user, refreshing: false %>
+      <%= render "refresh_status", user: @user, refreshing: @user.refresh_in_progress? %>
     </div>
+
+    <% if @today_details %>
+      <div class="bg-white rounded-xl shadow-sm p-4 mb-4">
+        <h3 class="text-lg font-semibold text-gray-800 mb-3"><%= t("calendar.today_menu") %></h3>
+        <div class="space-y-2 text-sm">
+          <% if @today_details.soup.present? %>
+            <div class="flex items-start">
+              <span class="font-medium text-gray-500 w-20"><%= t("calendar.soup") %>:</span>
+              <span class="text-gray-800"><%= @today_details.soup %></span>
+            </div>
+          <% end %>
+          <% if @today_details.main_dish.present? %>
+            <div class="flex items-start">
+              <span class="font-medium text-gray-500 w-20"><%= t("calendar.main_dish") %>:</span>
+              <span class="text-gray-800"><%= @today_details.main_dish %></span>
+            </div>
+          <% end %>
+          <% if @today_details.vegetables.present? %>
+            <div class="flex items-start">
+              <span class="font-medium text-gray-500 w-20"><%= t("calendar.vegetables") %>:</span>
+              <span class="text-gray-800"><%= @today_details.vegetables %></span>
+            </div>
+          <% end %>
+          <% if @today_details.dessert.present? %>
+            <div class="flex items-start">
+              <span class="font-medium text-gray-500 w-20"><%= t("calendar.dessert") %>:</span>
+              <span class="text-gray-800"><%= @today_details.dessert %></span>
+            </div>
+          <% end %>
+          <% if @today_details.bread.present? %>
+            <div class="flex items-start">
+              <span class="font-medium text-gray-500 w-20"><%= t("calendar.bread") %>:</span>
+              <span class="text-gray-800"><%= @today_details.bread %></span>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
 
     <div class="bg-white rounded-xl shadow-sm overflow-hidden">
       <div class="px-4 py-3 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
@@ -36,24 +75,26 @@
       </div>
 
       <div class="grid grid-cols-7 gap-px bg-gray-200">
-        <% %w[Seg Ter Qua Qui Sex Sáb Dom].each do |day| %>
+        <% [t("days.mon"), t("days.tue"), t("days.wed"), t("days.thu"), t("days.fri"), t("days.sat"), t("days.sun")].each do |day| %>
           <div class="bg-gray-50 py-2 text-center text-xs font-medium text-gray-500 uppercase">
             <%= day %>
           </div>
         <% end %>
 
         <% @calendar_days.each do |day| %>
-          <div class="<%= day_classes(day) %>" <%= tooltip_attributes(day) %>>
+          <div class="<%= day_classes(day) %>" style="<%= day_style(day) %>" <%= tooltip_attributes(day) %>>
             <% if day[:is_current_month] && !day[:is_weekend] && !day[:is_holiday] %>
               <% if day[:ticket] %>
-                <div class="<%= day[:ticket].bought ? 'bg-green-500 text-white' : 'bg-gray-300 text-gray-700' %> rounded-full w-7 h-7 flex items-center justify-center text-sm font-medium" title="<%= day[:ticket].bought ? 'Comprado' : 'Não comprado' %>">
-                  <span><%= day[:date].day %></span>
+                <div class="relative w-full h-full flex items-center justify-center">
+                  <div class="rounded-full w-7 h-7 flex items-center justify-center text-sm font-medium" style="<%= day[:ticket].bought ? 'background-color: #5DD3B6; color: white;' : 'background-color: #D1D5DB; color: #374151;' %>" title="<%= day[:ticket].bought ? t('calendar.bought') : t('calendar.not_bought') %>">
+                    <%= day[:date].day %>
+                  </div>
                   <% if day[:ticket].dish_type_icon %>
-                    <span class="text-xs ml-0.5"><%= day[:ticket].dish_type_icon %></span>
+                    <span class="absolute -top-1 -right-1"><%= raw day[:ticket].dish_type_icon %></span>
                   <% end %>
                 </div>
               <% else %>
-                <div class="text-gray-400 text-sm" title="Sem informação"><%= day[:date].day %></div>
+                <div class="text-gray-400 text-sm" title="<%= t("calendar.no_info") %>"><%= day[:date].day %></div>
               <% end %>
             <% else %>
               <span class="text-gray-300 text-sm"><%= day[:date].day %></span>
@@ -66,23 +107,15 @@
     <div class="mt-4 flex items-center justify-between text-sm">
       <div class="flex gap-4">
         <div class="flex items-center gap-2">
-          <div class="w-4 h-4 bg-green-500 rounded-full"></div>
-          <span class="text-gray-600">Comprado</span>
+          <div class="w-4 h-4 rounded-full" style="background-color: #5DD3B6;"></div>
+          <span class="text-gray-600"><%= t("calendar.bought") %></span>
         </div>
         <div class="flex items-center gap-2">
           <div class="w-4 h-4 bg-gray-300 rounded-full"></div>
-          <span class="text-gray-600">Não comprado</span>
-        </div>
-        <div class="flex items-center gap-1">
-          <span>🥩</span>
-          <span class="text-gray-600">Carne</span>
-        </div>
-        <div class="flex items-center gap-1">
-          <span>🐟</span>
-          <span class="text-gray-600">Peixe</span>
+          <span class="text-gray-600"><%= t("calendar.not_bought") %></span>
         </div>
       </div>
-      <%= link_to "Editar credenciais", edit_account_path, class: "text-blue-600 hover:text-blue-800" %>
+      <%= link_to t("calendar.edit_credentials"), edit_account_path, class: "text-blue-600 hover:text-blue-800" %>
     </div>
   </div>
 </div>

@@ -12,10 +12,26 @@ class CalendarsController < ApplicationController
     @tickets_by_date = @tickets.index_by(&:date)
 
     @calendar_days = build_calendar_days
+
+    @today_details = @user.meal_details.find_by(date: Date.today)
   end
 
   def refresh
     @user = current_user
+
+    if @user.refresh_in_progress?
+      respond_to do |format|
+        format.turbo_stream do
+          render turbo_stream: turbo_stream.replace(
+            "refresh-status",
+            partial: "refresh_status",
+            locals: { user: @user, refreshing: true, message: "Refresh already in progress..." }
+          )
+        end
+        format.html { redirect_to calendar_path, alert: "A refresh is already in progress. Please wait." }
+      end
+      return
+    end
 
     RefreshMealTicketsJob.perform_later(@user.id)
     FetchSaldoDisponivelJob.perform_later(@user.id)
@@ -25,7 +41,7 @@ class CalendarsController < ApplicationController
         render turbo_stream: turbo_stream.replace(
           "refresh-status",
           partial: "refresh_status",
-          locals: { user: @user, refreshing: true }
+          locals: { user: @user, refreshing: true, message: "Refreshing meal tickets..." }
         )
       end
       format.html { redirect_to calendar_path, notice: "Refreshing meal tickets..." }

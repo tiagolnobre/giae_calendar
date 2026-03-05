@@ -49,9 +49,8 @@ Rails.application.configure do
   # Use memory cache in production (simple single-server setup)
   config.cache_store = :memory_store
 
-  # Use async queue adapter for simple single-server deployment
+  # Use Solid Queue for background jobs
   config.active_job.queue_adapter = :solid_queue
-  config.solid_queue.connects_to = { database: { writing: :queue } }
 
   # Ignore bad email addresses and do not raise email delivery errors.
   # Set this to true and configure the email server for immediate delivery to raise delivery errors.

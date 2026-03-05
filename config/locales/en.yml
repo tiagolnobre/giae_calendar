@@ -1,34 +1,76 @@
-# Files in the config/locales directory are used for internationalization and
-# are automatically loaded by Rails. If you want to use locales other than
-# English, add the necessary files in this directory.
-#
-# To use the locales, use `I18n.t`:
-#
-#     I18n.t "hello"
-#
-# In views, this is aliased to just `t`:
-#
-#     <%= t("hello") %>
-#
-# To use a different locale, set it with `I18n.locale`:
-#
-#     I18n.locale = :es
-#
-# This would use the information in config/locales/es.yml.
-#
-# To learn more about the API, please read the Rails Internationalization guide
-# at https://guides.rubyonrails.org/i18n.html.
-#
-# Be aware that YAML interprets the following case-insensitive strings as
-# booleans: `true`, `false`, `on`, `off`, `yes`, `no`. Therefore, these strings
-# must be quoted to be interpreted as strings. For example:
-#
-#     en:
-#       "yes": yup
-#       enabled: "ON"
-
 en:
-  time:
-    formats:
-      long: "%B %d, %Y at %H:%M"
-  hello: "Hello world"
+  app_name: "Giae Calendar"
+  nav:
+    notifications: "Notifications"
+    mark_read: "Mark as read"
+    no_notifications: "No notifications"
+    view_all: "View all"
+    sign_out: "Sign out"
+    back: "Back"
+  session:
+    sign_in: "Sign in"
+    access_account: "Access your account"
+    email: "Email"
+    password: "Password"
+    no_account: "Don't have an account?"
+    create_account: "Create account"
+    remember_me: "Remember me"
+  registration:
+    sign_up: "Sign up"
+    create_account: "Create your account"
+    confirm_password: "Confirm password"
+    giae_username: "GIAE Username"
+    giae_password: "GIAE Password"
+    giae_login_url: "GIAE Login URL"
+    already_have_account: "Already have an account?"
+    password_minimum: "characters minimum"
+    leave_blank: "Leave blank to not change"
+  calendar:
+    title: "Calendar"
+    today: "Today"
+    meals: "Meals"
+    today_menu: "Today's Menu"
+    no_meals: "No meals scheduled"
+    no_info: "No information"
+    loading: "Loading..."
+    error_loading: "Error loading meals"
+    retry: "Retry"
+    previous_month: "Previous month"
+    next_month: "Next month"
+    lunch: "Lunch"
+    dinner: "Dinner"
+    refresh: "Refresh"
+    refreshing: "Refreshing..."
+    soup: "Soup"
+    main_dish: "Main dish"
+    vegetables: "Vegetables"
+    dessert: "Dessert"
+    bread: "Bread"
+    bought: "Bought"
+    not_bought: "Not bought"
+    edit_credentials: "Edit credentials"
+  notifications:
+    title: "Notifications"
+    no_notifications: "No notifications"
+    mark_as_read: "Mark as read"
+    no_notifications_you: "You have no notifications."
+  account:
+    title: "Account"
+    edit_account: "Edit account"
+    update_account: "Update account"
+    change_password: "Change password"
+    password_changed: "Password changed successfully"
+  flash:
+    signed_in: "Signed in successfully."
+    signed_out: "Signed out successfully."
+    account_created: "Account created successfully."
+    account_updated: "Account updated successfully."
+    invalid_credentials: "Invalid email or password."
+  days:
+    mon: "Mon"
+    tue: "Tue"
+    wed: "Wed"
+    thu: "Thu"
+    fri: "Fri"
+    sat: "Sat"
+    sun: "Sun"

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class FetchSaldoDisponivelJob < ApplicationJob
+class FetchSaldoDisponivelJob < ApplicationScraperJob
   queue_as :default
 
   around_enqueue do |job, block|
@@ -25,28 +25,20 @@ class FetchSaldoDisponivelJob < ApplicationJob
 
     Rails.logger.info "[FetchSaldoDisponivelJob] Starting for user #{user.id}"
 
-    scraper = GiaeScraperService.new(
-      username: user.giae_username,
-      password: user.giae_password,
-      login_url: Rails.application.config.giae_login_url,
-      headless: true
-    )
+    with_session(user) do |scraper|
+      result = scraper.fetch_saldo_disponivel
 
-    scraper.login!
-    result = scraper.fetch_saldo_disponivel
+      SaldoRecord.create!(
+        user_id: user.id,
+        cents: result[:cents]
+      )
 
-    SaldoRecord.create!(
-      user_id: user.id,
-      cents: result[:cents]
-    )
+      Rails.logger.info "[FetchSaldoDisponivelJob] Completed for user #{user.id}, saldo: #{result[:euros]} (#{result[:cents]} cents)"
 
-    Rails.logger.info "[FetchSaldoDisponivelJob] Completed for user #{user.id}, saldo: #{result[:euros]} (#{result[:cents]} cents)"
-
-    result
-  rescue => e
-    Rails.logger.error "[FetchSaldoDisponivelJob] Failed for user #{user_id}: #{e.message}"
+      result
+    end
+  rescue GiaeSessionManager::SessionUnavailable => e
+    Rails.logger.info "[FetchSaldoDisponivelJob] Session unavailable for user #{user_id}: #{e.message}, will retry"
     raise
-  ensure
-    scraper&.instance_variable_get(:@browser)&.quit
   end
 end

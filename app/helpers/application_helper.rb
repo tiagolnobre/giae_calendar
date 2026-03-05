@@ -4,7 +4,9 @@ module ApplicationHelper
   def day_classes(day)
     classes = [ "aspect-square p-1 flex items-center justify-center" ]
 
-    classes << if day[:is_current_month]
+    classes << if day[:date] == Date.today
+      "bg-white"
+    elsif day[:is_current_month]
       if day[:is_weekend] || day[:is_holiday]
         "bg-gray-100"
       else
@@ -15,6 +17,10 @@ module ApplicationHelper
     end
 
     classes.join(" ")
+  end
+
+  def day_style(day)
+    "background-color: #FFF2D0;" if day[:date] == Date.today
   end
 
   def tooltip_attributes(day)

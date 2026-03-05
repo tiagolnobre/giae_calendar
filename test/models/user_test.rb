@@ -1,12 +1,13 @@
 require "test_helper"
 
 class UserTest < ActiveSupport::TestCase
+  include ActiveJob::TestHelper
+
   setup do
     @user = User.new(
       email: "test@example.com",
       password: "password123",
       password_confirmation: "password123",
-      giae_login_url: "https://test.giae.pt",
       giae_username: "testuser",
       giae_password: "testpass"
     )
@@ -42,12 +43,6 @@ class UserTest < ActiveSupport::TestCase
     assert @user.errors[:password_confirmation].any?
   end
 
-  test "giae_login_url should be present" do
-    @user.giae_login_url = ""
-    assert_not @user.valid?
-    assert @user.errors[:giae_login_url].any?
-  end
-
   test "should authenticate with correct password" do
     @user.save!
     authenticated = User.find_by(email: "test@example.com").authenticate("password123")
@@ -65,6 +60,18 @@ class UserTest < ActiveSupport::TestCase
     @user.meal_tickets.create!(date: Date.today, bought: true)
     assert_difference "MealTicket.count", -1 do
       @user.destroy
+    end
+  end
+
+  test "should enqueue RefreshMealTicketsJob on create" do
+    assert_enqueued_with(job: RefreshMealTicketsJob) do
+      @user.save!
+    end
+  end
+
+  test "should enqueue FetchSaldoDisponivelJob on create" do
+    assert_enqueued_with(job: FetchSaldoDisponivelJob) do
+      @user.save!
     end
   end
 end

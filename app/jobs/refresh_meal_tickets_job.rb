@@ -1,10 +1,7 @@
 # frozen_string_literal: true
 
-class RefreshMealTicketsJob < ApplicationJob
+class RefreshMealTicketsJob < ApplicationScraperJob
   queue_as :default
-
-  # No automatic retries - let it fail and user can manually retry
-  # retry_on StandardError, wait: 30.seconds, attempts: 3
 
   # Discard job if one is already running for this user
   around_enqueue do |job, block|
@@ -29,34 +26,50 @@ class RefreshMealTicketsJob < ApplicationJob
 
     Rails.logger.info "[RefreshMealTicketsJob] Starting refresh for user #{user.id}"
 
-    scraper = GiaeScraperService.new(
-      username: user.giae_username,
-      password: user.giae_password,
-      login_url: Rails.application.config.giae_login_url,
-      headless: true
-    )
+    with_session(user) do |scraper|
+      results = scraper.fetch_refeicoes_compra
 
-    results = scraper.call
-
-    ActiveRecord::Base.transaction do
-      results.each do |result|
-        ticket = MealTicket.find_or_initialize_by(
-          user_id: user.id,
-          date: result[:date]
-        )
-        ticket.bought = result[:bought]
-        ticket.dish_type = result[:dish_type]
-        ticket.save!
+      begin
+        meal_details = scraper.fetch_meal_details
+      rescue => e
+        Rails.logger.warn "[RefreshMealTicketsJob] Failed to fetch meal details: #{e.message}"
+        meal_details = {}
       end
+
+      ActiveRecord::Base.transaction do
+        results.each do |result|
+          ticket = MealTicket.find_or_initialize_by(
+            user_id: user.id,
+            date: result[:date]
+          )
+          ticket.bought = result[:bought]
+          ticket.dish_type = result[:dish_type]
+          ticket.save!
+
+          if meal_details[result[:date]]
+            detail = MealDetail.find_or_initialize_by(
+              user_id: user.id,
+              date: result[:date],
+              period: meal_details[result[:date]][:descricaoperiodo] || "Almoço"
+            )
+            detail.soup = meal_details[result[:date]][:soup]
+            detail.main_dish = meal_details[result[:date]][:main_dish]
+            detail.vegetables = meal_details[result[:date]][:vegetables]
+            detail.dessert = meal_details[result[:date]][:dessert]
+            detail.bread = meal_details[result[:date]][:bread]
+            detail.save!
+          end
+        end
+      end
+
+      user.update!(last_refreshed_at: Time.current)
+
+      Rails.logger.info "[RefreshMealTicketsJob] Completed refresh for user #{user.id}, #{results.length} tickets processed"
+
+      results
     end
-
-    user.update!(last_refreshed_at: Time.current)
-
-    Rails.logger.info "[RefreshMealTicketsJob] Completed refresh for user #{user.id}, #{results.length} tickets processed"
-
-    results
-  rescue => e
-    Rails.logger.error "[RefreshMealTicketsJob] Failed for user #{user_id}: #{e.message}"
+  rescue GiaeSessionManager::SessionUnavailable => e
+    Rails.logger.info "[RefreshMealTicketsJob] Session unavailable for user #{user_id}: #{e.message}, will retry"
     raise
   end
 end
