@@ -12,6 +12,7 @@ export default class extends Controller {
   }
 
   close() {
+    // Clear the turbo frame content to close the modal
     this.element.closest("turbo-frame").innerHTML = ""
   }
 

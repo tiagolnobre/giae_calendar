@@ -82,27 +82,30 @@
         <% end %>
 
         <% @calendar_days.each do |day| %>
-          <%= link_to day_details_path(date: day[:date]), 
-              class: "#{day_classes(day)} cursor-pointer hover:bg-gray-100 transition-colors", 
-              style: "#{day_style(day)}",
-              data: { turbo_frame: "day_modal" } do %>
+          <div class="<%= day_classes(day) %> <%= day[:is_current_month] && !day[:is_weekend] && !day[:is_holiday] ? 'cursor-pointer hover:bg-gray-100' : '' %> transition-colors" 
+               style="<%= day_style(day) %>"
+               <%= day[:is_current_month] && !day[:is_weekend] && !day[:is_holiday] ? "data-action=\"click->modal#open\" data-date=\"#{day[:date]}\"".html_safe : '' %>>
             <% if day[:is_current_month] && !day[:is_weekend] && !day[:is_holiday] %>
-              <% if day[:ticket] %>
-                <div class="relative w-full h-full flex items-center justify-center">
-                  <div class="rounded-full w-7 h-7 flex items-center justify-center text-sm font-medium" style="<%= day[:ticket].bought ? 'background-color: #5DD3B6; color: white;' : 'background-color: #D1D5DB; color: #374151;' %>">
-                    <%= day[:date].day %>
+              <%= link_to day_details_path(date: day[:date]), 
+                  class: "w-full h-full flex items-center justify-center", 
+                  data: { turbo_frame: "day_modal" } do %>
+                <% if day[:ticket] %>
+                  <div class="relative w-full h-full flex items-center justify-center">
+                    <div class="rounded-full w-7 h-7 flex items-center justify-center text-sm font-medium" style="<%= day[:ticket].bought ? 'background-color: #5DD3B6; color: white;' : 'background-color: #D1D5DB; color: #374151;' %>">
+                      <%= day[:date].day %>
+                    </div>
+                    <% if day[:ticket].dish_type_icon %>
+                      <span class="absolute -top-1 -right-1"><%= raw day[:ticket].dish_type_icon %></span>
+                    <% end %>
                   </div>
-                  <% if day[:ticket].dish_type_icon %>
-                    <span class="absolute -top-1 -right-1"><%= raw day[:ticket].dish_type_icon %></span>
-                  <% end %>
-                </div>
-              <% else %>
-                <div class="text-gray-400 text-sm"><%= day[:date].day %></div>
+                <% else %>
+                  <div class="text-gray-400 text-sm"><%= day[:date].day %></div>
+                <% end %>
               <% end %>
             <% else %>
               <span class="text-gray-300 text-sm"><%= day[:date].day %></span>
             <% end %>
-          <% end %>
+          </div>
         <% end %>
       </div>
     </div>
