@@ -59,12 +59,7 @@ class CalendarsController < ApplicationController
     @meal_detail = @user.meal_details.find_by(date: @date)
     @meal_ticket = @user.meal_tickets.find_by(date: @date)
 
-    respond_to do |format|
-      format.html { render partial: "calendars/day_modal", layout: false, locals: { date: @date, meal_detail: @meal_detail, meal_ticket: @meal_ticket } }
-      format.turbo_stream do
-        render turbo_stream: turbo_stream.update("day_modal", partial: "calendars/day_modal", locals: { date: @date, meal_detail: @meal_detail, meal_ticket: @meal_ticket })
-      end
-    end
+    render partial: "calendars/day_modal", layout: false, locals: { date: @date, meal_detail: @meal_detail, meal_ticket: @meal_ticket }
   end
 
   private
