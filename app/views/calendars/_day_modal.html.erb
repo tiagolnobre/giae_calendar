@@ -1,0 +1,76 @@
+<%= turbo_frame_tag "day_modal" do %>
+  <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity z-50" data-controller="modal" data-action="click->modal#close">
+    <div class="fixed inset-0 z-10 overflow-y-auto">
+      <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+        <div class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg" data-action="click->modal#stopPropagation">
+          <div class="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+            <div class="sm:flex sm:items-start">
+              <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left w-full">
+                <h3 class="text-xl font-semibold leading-6 text-gray-900 mb-4">
+                  <%= l(date, format: :long) %>
+                </h3>
+                
+                <% if meal_detail %>
+                  <div class="space-y-3 text-sm">
+                    <% if meal_detail.soup.present? %>
+                      <div class="flex items-start">
+                        <span class="font-medium text-gray-500 w-24"><%= t("calendar.soup") %>:</span>
+                        <span class="text-gray-800"><%= meal_detail.soup %></span>
+                      </div>
+                    <% end %>
+                    
+                    <% if meal_detail.main_dish.present? %>
+                      <div class="flex items-start">
+                        <span class="font-medium text-gray-500 w-24"><%= t("calendar.main_dish") %>:</span>
+                        <span class="text-gray-800"><%= meal_detail.main_dish %></span>
+                      </div>
+                    <% end %>
+                    
+                    <% if meal_detail.vegetables.present? %>
+                      <div class="flex items-start">
+                        <span class="font-medium text-gray-500 w-24"><%= t("calendar.vegetables") %>:</span>
+                        <span class="text-gray-800"><%= meal_detail.vegetables %></span>
+                      </div>
+                    <% end %>
+                    
+                    <% if meal_detail.dessert.present? %>
+                      <div class="flex items-start">
+                        <span class="font-medium text-gray-500 w-24"><%= t("calendar.dessert") %>:</span>
+                        <span class="text-gray-800"><%= meal_detail.dessert %></span>
+                      </div>
+                    <% end %>
+                    
+                    <% if meal_detail.bread.present? %>
+                      <div class="flex items-start">
+                        <span class="font-medium text-gray-500 w-24"><%= t("calendar.bread") %>:</span>
+                        <span class="text-gray-800"><%= meal_detail.bread %></span>
+                      </div>
+                    <% end %>
+                  </div>
+                <% else %>
+                  <p class="text-gray-500 text-center py-4"><%= t("calendar.no_menu_info") %></p>
+                <% end %>
+                
+                <% if meal_ticket %>
+                  <div class="mt-4 pt-4 border-t border-gray-200">
+                    <div class="flex items-center justify-between">
+                      <span class="text-sm font-medium text-gray-500"><%= t("calendar.status") %>:</span>
+                      <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium <%= meal_ticket.bought ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' %>">
+                        <%= meal_ticket.bought ? t("calendar.bought") : t("calendar.not_bought") %>
+                      </span>
+                    </div>
+                  </div>
+                <% end %>
+              </div>
+            </div>
+          </div>
+          <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+            <button type="button" class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto" data-action="click->modal#close">
+              <%= t("common.close") %>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+<% end %>

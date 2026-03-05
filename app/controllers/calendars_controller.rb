@@ -48,6 +48,23 @@ class CalendarsController < ApplicationController
     end
   end
 
+  def day_details
+    @user = current_user
+    @date = begin
+      Date.parse(params[:date])
+    rescue
+      Date.today
+    end
+
+    @meal_detail = @user.meal_details.find_by(date: @date)
+    @meal_ticket = @user.meal_tickets.find_by(date: @date)
+
+    respond_to do |format|
+      format.html { render partial: "calendars/day_modal", locals: { date: @date, meal_detail: @meal_detail, meal_ticket: @meal_ticket } }
+      format.turbo_stream { render partial: "calendars/day_modal", locals: { date: @date, meal_detail: @meal_detail, meal_ticket: @meal_ticket } }
+    end
+  end
+
   private
 
   def build_calendar_days

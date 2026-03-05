@@ -82,11 +82,14 @@
         <% end %>
 
         <% @calendar_days.each do |day| %>
-          <div class="<%= day_classes(day) %>" style="<%= day_style(day) %>" <%= tooltip_attributes(day) %>>
+          <%= link_to day_details_path(date: day[:date]), 
+              class: "#{day_classes(day)} cursor-pointer hover:bg-gray-100 transition-colors", 
+              style: "#{day_style(day)}",
+              data: { turbo_frame: "day_modal" } do %>
             <% if day[:is_current_month] && !day[:is_weekend] && !day[:is_holiday] %>
               <% if day[:ticket] %>
                 <div class="relative w-full h-full flex items-center justify-center">
-                  <div class="rounded-full w-7 h-7 flex items-center justify-center text-sm font-medium" style="<%= day[:ticket].bought ? 'background-color: #5DD3B6; color: white;' : 'background-color: #D1D5DB; color: #374151;' %>" title="<%= day[:ticket].bought ? t('calendar.bought') : t('calendar.not_bought') %>">
+                  <div class="rounded-full w-7 h-7 flex items-center justify-center text-sm font-medium" style="<%= day[:ticket].bought ? 'background-color: #5DD3B6; color: white;' : 'background-color: #D1D5DB; color: #374151;' %>">
                     <%= day[:date].day %>
                   </div>
                   <% if day[:ticket].dish_type_icon %>
@@ -94,15 +97,17 @@
                   <% end %>
                 </div>
               <% else %>
-                <div class="text-gray-400 text-sm" title="<%= t("calendar.no_info") %>"><%= day[:date].day %></div>
+                <div class="text-gray-400 text-sm"><%= day[:date].day %></div>
               <% end %>
             <% else %>
               <span class="text-gray-300 text-sm"><%= day[:date].day %></span>
             <% end %>
-          </div>
+          <% end %>
         <% end %>
       </div>
     </div>
+
+    <%= turbo_frame_tag "day_modal" %>
 
     <div class="mt-4 flex items-center justify-between text-sm">
       <div class="flex gap-4">

@@ -19,4 +19,5 @@ Rails.application.routes.draw do
 
   get "/calendar", to: "calendars#show", as: :calendar
   post "/calendar/refresh", to: "calendars#refresh", as: :refresh_calendar
+  get "/calendar/day_details", to: "calendars#day_details", as: :day_details
 end

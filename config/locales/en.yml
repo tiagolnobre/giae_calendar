@@ -1,4 +1,6 @@
 en:
+  common:
+    close: "Close"
   app_name: "Giae Calendar"
   nav:
     notifications: "Notifications"
@@ -49,6 +51,8 @@ en:
     bought: "Bought"
     not_bought: "Not bought"
     edit_credentials: "Edit credentials"
+    no_menu_info: "No menu information for this day"
+    status: "Status"
   notifications:
     title: "Notifications"
     no_notifications: "No notifications"
