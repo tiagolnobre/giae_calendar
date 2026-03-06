@@ -7,9 +7,11 @@ A Rails web application that scrapes and displays school meal information from t
 - **User Authentication**: Sign up and sign in with email/password
 - **GIAE Integration**: Automatically scrapes meal data from the GIAE portal using your credentials
 - **Calendar View**: Visual calendar showing which days have meals purchased
+- **Day Details Modal**: Click any day to see the full menu (soup, main dish, vegetables, dessert, bread)
 - **Notifications**: In-app and email notifications for upcoming meals without tickets
 - **Background Jobs**: Automated refresh of meal data using Solid Queue
 - **Session Management**: Secure handling of GIAE session cookies with automatic refresh
+- **Remember Me**: Stay logged in across browser sessions
 
 ## Tech Stack
 
@@ -17,15 +19,14 @@ A Rails web application that scrapes and displays school meal information from t
 - **Database**: SQLite3 with Litestream for backups
 - **Frontend**: Tailwind CSS, Turbo, Stimulus
 - **Background Jobs**: Solid Queue
-- **Browser Automation**: Ferrum (Chrome/Chromium headless browser)
+- **HTTP Client**: Net::HTTP (for GIAE scraping)
 - **Authentication**: bcrypt
-- **Deployment**: Docker, Kamal, Fly.io
+- **Deployment**: Docker, Fly.io
 
 ## Prerequisites
 
 - Ruby 3.3+
 - SQLite3
-- Chrome/Chromium browser (for Ferrum scraping)
 - Node.js (for Tailwind CSS)
 
 ## Installation
@@ -82,6 +83,7 @@ MEAL_TICKETS_STALE_HOURS=4
 
 - Visit `/calendar` to see your meal tickets
 - Days with purchased meals are highlighted
+- Click on any day to see the full menu details in a modal popup
 - Click "Refresh" to manually update data from GIAE
 
 ### Notifications
@@ -121,7 +123,7 @@ The test suite includes:
 - Controller tests (Sessions, Registrations, Notifications, Calendars)
 - Job tests (All background jobs)
 - Service tests (GiaeScraperService, NotificationService)
-- Integration tests (Authentication flow)
+- Integration tests (Authentication flow, Remember Me)
 
 ## Deployment
 
@@ -169,16 +171,16 @@ test/
 
 ## Models
 
-- **User**: Authentication, GIAE credentials (encrypted), notification preferences
+- **User**: Authentication, GIAE credentials (encrypted), notification preferences, remember me tokens
 - **MealTicket**: Daily meal purchase status
-- **MealDetail**: Detailed meal information (soup, main dish, etc.)
+- **MealDetail**: Detailed meal information (soup, main dish, vegetables, dessert, bread)
 - **SaldoRecord**: Account balance history
 - **Notification**: User notifications (in-app/email)
 - **GiaeSession**: Managed GIAE portal sessions
 
 ## Services
 
-- **GiaeScraperService**: Scrapes the GIAE portal using Ferrum
+- **GiaeScraperService**: Scrapes the GIAE portal using HTTP requests
 - **NotificationService**: Sends in-app and email notifications
 - **GiaeSessionManager**: Manages GIAE session lifecycle
 
@@ -196,23 +198,18 @@ This project is proprietary software for personal/educational use.
 
 ## Troubleshooting
 
-### Chrome/Chromium Not Found
-If you get errors about Chrome not being found, install Chromium:
-```bash
-# macOS
-brew install chromium
-
-# Ubuntu/Debian
-sudo apt-get install chromium-browser
-```
-
 ### Database Locked Errors
 SQLite can have concurrency issues. In production, use a single Puma worker or switch to PostgreSQL.
 
 ### GIAE Login Failures
 - Verify your GIAE credentials are correct
 - Check that the GIAE portal is accessible
-- Ensure Chrome/Chromium is properly installed
+- Check the GIAE portal URL in your credentials
+
+### Master Key Issues
+If you get encryption errors:
+- Ensure `config/master.key` exists and is correct
+- Set `RAILS_MASTER_KEY` environment variable in production
 
 ## Support
 
@@ -220,4 +217,4 @@ For issues and feature requests, please open an issue on the repository.
 
 ## Credits
 
-Built with Rails, Tailwind CSS, and Ferrum for browser automation.
+Built with Rails, Tailwind CSS, and Solid Queue for background processing.
