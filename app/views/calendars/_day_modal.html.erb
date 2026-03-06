@@ -1,79 +1,82 @@
 <%= turbo_frame_tag "day_modal" do %>
-  <div data-controller="modal" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true" data-action="keydown->modal#closeOnEscape">
-    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" data-action="click->modal#close"></div>
-
-      <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-
-      <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full" data-action="click->modal#stopPropagation">
-        <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-          <div class="sm:flex sm:items-start">
-            <div class="mt-3 text-center sm:mt-0 sm:text-left w-full">
-              <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
-                <%= l(date, format: :long) %>
-              </h3>
-              
-              <div class="mt-4">
-                <% if meal_detail %>
-                  <div class="space-y-3 text-sm">
-                    <% if meal_detail.soup.present? %>
-                      <div class="flex items-start">
-                        <span class="font-medium text-gray-500 w-24"><%= t("calendar.soup") %>:</span>
-                        <span class="text-gray-800"><%= meal_detail.soup %></span>
-                      </div>
-                    <% end %>
-                    
-                    <% if meal_detail.main_dish.present? %>
-                      <div class="flex items-start">
-                        <span class="font-medium text-gray-500 w-24"><%= t("calendar.main_dish") %>:</span>
-                        <span class="text-gray-800"><%= meal_detail.main_dish %></span>
-                      </div>
-                    <% end %>
-                    
-                    <% if meal_detail.vegetables.present? %>
-                      <div class="flex items-start">
-                        <span class="font-medium text-gray-500 w-24"><%= t("calendar.vegetables") %>:</span>
-                        <span class="text-gray-800"><%= meal_detail.vegetables %></span>
-                      </div>
-                    <% end %>
-                    
-                    <% if meal_detail.dessert.present? %>
-                      <div class="flex items-start">
-                        <span class="font-medium text-gray-500 w-24"><%= t("calendar.dessert") %>:</span>
-                        <span class="text-gray-800"><%= meal_detail.dessert %></span>
-                      </div>
-                    <% end %>
-                    
-                    <% if meal_detail.bread.present? %>
-                      <div class="flex items-start">
-                        <span class="font-medium text-gray-500 w-24"><%= t("calendar.bread") %>:</span>
-                        <span class="text-gray-800"><%= meal_detail.bread %></span>
-                      </div>
-                    <% end %>
-                  </div>
-                <% else %>
-                  <p class="text-gray-500 text-center py-4"><%= t("calendar.no_menu_info") %></p>
-                <% end %>
-                
-                <% if meal_ticket %>
-                  <div class="mt-4 pt-4 border-t border-gray-200">
-                    <div class="flex items-center justify-between">
-                      <span class="text-sm font-medium text-gray-500"><%= t("calendar.status") %>:</span>
-                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <%= meal_ticket.bought ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' %>">
-                        <%= meal_ticket.bought ? t("calendar.bought") : t("calendar.not_bought") %>
-                      </span>
-                    </div>
-                  </div>
-                <% end %>
+  <div data-controller="modal" class="fixed inset-0 z-50 flex items-center justify-center" data-action="keydown->modal#closeOnEscape">
+    <!-- Backdrop -->
+    <div class="fixed inset-0 bg-gray-900 bg-opacity-50" data-action="click->modal#close"></div>
+    
+    <!-- Modal Content -->
+    <div class="relative bg-white rounded-lg shadow-xl max-w-md w-full mx-4" data-action="click->modal#stopPropagation">
+      <!-- Header -->
+      <div class="bg-gray-50 px-6 py-4 border-b border-gray-200 rounded-t-lg flex items-center justify-between">
+        <h3 class="text-lg font-semibold text-gray-900">
+          <%= l(date, format: :long) %>
+        </h3>
+        <button type="button" class="text-gray-400 hover:text-gray-600" data-action="click->modal#close">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      
+      <!-- Body -->
+      <div class="px-6 py-4">
+        <% if meal_detail %>
+          <div class="space-y-3 text-sm">
+            <% if meal_detail.soup.present? %>
+              <div class="flex items-start">
+                <span class="font-medium text-gray-500 w-24 flex-shrink-0"><%= t("calendar.soup") %>:</span>
+                <span class="text-gray-800"><%= meal_detail.soup %></span>
               </div>
+            <% end %>
+            
+            <% if meal_detail.main_dish.present? %>
+              <div class="flex items-start">
+                <span class="font-medium text-gray-500 w-24 flex-shrink-0"><%= t("calendar.main_dish") %>:</span>
+                <span class="text-gray-800"><%= meal_detail.main_dish %></span>
+              </div>
+            <% end %>
+            
+            <% if meal_detail.vegetables.present? %>
+              <div class="flex items-start">
+                <span class="font-medium text-gray-500 w-24 flex-shrink-0"><%= t("calendar.vegetables") %>:</span>
+                <span class="text-gray-800"><%= meal_detail.vegetables %></span>
+              </div>
+            <% end %>
+            
+            <% if meal_detail.dessert.present? %>
+              <div class="flex items-start">
+                <span class="font-medium text-gray-500 w-24 flex-shrink-0"><%= t("calendar.dessert") %>:</span>
+                <span class="text-gray-800"><%= meal_detail.dessert %></span>
+              </div>
+            <% end %>
+            
+            <% if meal_detail.bread.present? %>
+              <div class="flex items-start">
+                <span class="font-medium text-gray-500 w-24 flex-shrink-0"><%= t("calendar.bread") %>:</span>
+                <span class="text-gray-800"><%= meal_detail.bread %></span>
+              </div>
+            <% end %>
+          </div>
+        <% else %>
+          <p class="text-gray-500 text-center py-6"><%= t("calendar.no_menu_info") %></p>
+        <% end %>
+        
+        <% if meal_ticket %>
+          <div class="mt-4 pt-4 border-t border-gray-200">
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-medium text-gray-500"><%= t("calendar.status") %>:</span>
+              <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium <%= meal_ticket.bought ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' %>">
+                <%= meal_ticket.bought ? t("calendar.bought") : t("calendar.not_bought") %>
+              </span>
             </div>
           </div>
-        </div>
-        <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-          <button type="button" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm" data-action="click->modal#close">
-            <%= t("common.close") %>
-          </button>
-        </div>
+        <% end %>
+      </div>
+      
+      <!-- Footer -->
+      <div class="bg-gray-50 px-6 py-4 border-t border-gray-200 rounded-b-lg">
+        <button type="button" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" data-action="click->modal#close">
+          <%= t("common.close") %>
+        </button>
       </div>
     </div>
   </div>
