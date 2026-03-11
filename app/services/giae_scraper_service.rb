@@ -20,6 +20,14 @@ class GiaeScraperService
     @school_code = school_code || DEFAULT_SCHOOL_CODE
     @base_url = @login_url.sub(/\/[^\/]*\z/, "")
     @cookies = session_cookie  # Use provided session or nil
+
+    GiaeDebug.log("GiaeScraperService initialized", {
+      username: @username,
+      school_code: @school_code,
+      base_url: @base_url,
+      login_url: @login_url,
+      has_initial_cookies: @cookies.present?
+    })
   end
 
   def call
@@ -28,11 +36,20 @@ class GiaeScraperService
   end
 
   def login!
+    GiaeDebug.log("login! called", { already_logged_in: logged_in?, has_cookies: @cookies.present? })
+
     # Skip if we already have a session cookie
-    return self if logged_in?
+    if logged_in?
+      GiaeDebug.log("Already logged in, skipping login")
+      return self
+    end
 
     response = perform_login
+    GiaeDebug.log("Login response received", { status: response.code })
+
     @cookies = extract_cookies(response)
+    GiaeDebug.log("Cookies extracted", { cookies: @cookies })
+
     raise(LoginError, "Login failed - no session cookie received") unless @cookies
     self
   end
@@ -111,6 +128,8 @@ class GiaeScraperService
   private
 
   def perform_login
+    GiaeDebug.log("Starting login")
+
     url = "#{@base_url}/cgi-bin/webgiae2.exe/loginv2"
 
     body = {
@@ -121,7 +140,13 @@ class GiaeScraperService
       urlrecuperacao: @login_url
     }.to_json
 
-    post_request(url, body, skip_auth: true)
+    GiaeDebug.log("Login body", body)
+
+    response = post_request(url, body, skip_auth: true)
+
+    GiaeDebug.log("Login response received", { status: response.code })
+
+    response
   end
 
   def post_request(url, body, skip_auth: false)
@@ -145,7 +170,21 @@ class GiaeScraperService
 
     request.body = body
 
+    # Debug logging
+    headers = {
+      "Content-Type" => request["Content-Type"],
+      "Accept" => request["Accept"],
+      "Origin" => request["Origin"],
+      "Referer" => request["Referer"],
+      "X-Requested-With" => request["X-Requested-With"]
+    }
+    headers["Cookie"] = request["Cookie"] if request["Cookie"]
+
+    GiaeDebug.log_request("POST", "POST", url, headers, body, request["Cookie"])
+
     response = http.request(request)
+
+    GiaeDebug.log_response("POST", response)
 
     Rails.logger.debug "[GiaeScraperService] POST #{url} - Response: #{response.code}"
 
@@ -182,11 +221,25 @@ class GiaeScraperService
 
   def extract_cookies(response)
     cookies = response.get_fields("set-cookie")
+
+    GiaeDebug.log("extract_cookies called", {
+      has_set_cookie: cookies.present?,
+      set_cookie_count: cookies&.length
+    })
+
     return nil unless cookies
 
-    cookies.map do |cookie|
-      cookie.split(";").first.strip
+    GiaeDebug.log("Raw cookies from response", cookies)
+
+    parsed_cookies = cookies.map do |cookie|
+      parsed = cookie.split(";").first.strip
+      GiaeDebug.log("Parsed cookie", { original: cookie[0..50], parsed: parsed })
+      parsed
     end.join("; ")
+
+    GiaeDebug.log("Final parsed cookies", parsed_cookies)
+
+    parsed_cookies
   end
 
   def parse_refeicoes(refeicoes_raw)

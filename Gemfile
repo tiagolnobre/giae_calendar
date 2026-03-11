@@ -78,3 +78,6 @@ gem "solid_queue"
 gem "aws-sdk-s3", "~> 1.213", require: false
 
 gem "lucide-rails"
+
+gem "sentry-ruby"
+gem "sentry-rails"

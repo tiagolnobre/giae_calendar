@@ -12,16 +12,23 @@ class GiaeSessionManager
   # Main entry point for jobs
   # Yields a GiaeScraperService with an active session
   def with_active_session
+    GiaeDebug.log("with_active_session started", { user_id: @user.id })
+
     session = acquire_or_refresh_session
+    GiaeDebug.log("Session acquired", { session_id: session.id, status: session.status })
+
     scraper = create_scraper_with_session(session)
+    GiaeDebug.log("Scraper created with session", { has_cookie: scraper.cookies.present? })
 
     begin
       result = yield scraper
       session.touch(:last_used_at)
+      GiaeDebug.log("Request completed successfully")
       result
-    rescue GiaeScraperService::SessionExpired
+    rescue GiaeScraperService::SessionExpired => e
       # Detected expired session during request
       session.transition_to_expired!
+      GiaeDebug.log_error("Session expired during request", e)
       Rails.logger.warn "[GiaeSessionManager] Session expired during request for user #{@user.id}"
       raise SessionUnavailable, "Session expired, job will retry"
     end
@@ -94,7 +101,10 @@ class GiaeSessionManager
   end
 
   def create_scraper_with_session(session)
+    GiaeDebug.log("Creating scraper with session", { session_id: session.id, encrypted_cookie: session.cookie_data[0..30] })
+
     cookie = session.decrypt_cookie
+    GiaeDebug.log("Cookie decrypted", { has_cookie: cookie.present?, cookie_length: cookie&.length })
 
     unless cookie
       Rails.logger.error "[GiaeSessionManager] Failed to decrypt cookie for user #{@user.id}"
