@@ -15,7 +15,14 @@ class GiaeSessionManager
     GiaeDebug.log("with_active_session started", { user_id: @user.id })
 
     session = acquire_or_refresh_session
-    GiaeDebug.log("Session acquired", { session_id: session.id, status: session.status })
+    GiaeDebug.log("Session acquired", { session_id: session.id, status: session.status, refreshed_at: session.refreshed_at })
+
+    # Check if session is too old (older than 24 hours)
+    if session.refreshed_at && session.refreshed_at < 24.hours.ago
+      GiaeDebug.log("Session is too old, marking as expired", { refreshed_at: session.refreshed_at })
+      session.transition_to_expired!
+      raise SessionUnavailable, "Session expired due to age"
+    end
 
     scraper = create_scraper_with_session(session)
     GiaeDebug.log("Scraper created with session", { has_cookie: scraper.cookies.present? })
@@ -43,6 +50,11 @@ class GiaeSessionManager
 
       case session.status
       when "active"
+        # Check if session is too old (cookie expired)
+        if session.refreshed_at && session.refreshed_at < 24.hours.ago
+          GiaeDebug.log("Active session is too old, refreshing", { refreshed_at: session.refreshed_at })
+          obtain_new_session!(session)
+        end
         return session
 
       when "refreshing"
