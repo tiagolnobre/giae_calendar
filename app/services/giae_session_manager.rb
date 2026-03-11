@@ -101,7 +101,7 @@ class GiaeSessionManager
   end
 
   def create_scraper_with_session(session)
-    GiaeDebug.log("Creating scraper with session", { session_id: session.id, encrypted_cookie: session.cookie_data[0..30] })
+    GiaeDebug.log("Creating scraper with session", { session_id: session.id, has_encrypted_cookie: session.session_cookie_ciphertext.present? })
 
     cookie = session.decrypt_cookie
     GiaeDebug.log("Cookie decrypted", { has_cookie: cookie.present?, cookie_length: cookie&.length })
