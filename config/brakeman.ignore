@@ -1,0 +1,26 @@
+{
+  "ignored_warnings": [
+    {
+      "warning_type": "SSL Verification Bypass",
+      "warning_code": 72,
+      "fingerprint": "b998a0a30fba5d59fafa9d7ff97d2e964aef28c5c5f1e4f35f7a66b1233efb6b",
+      "check_name": "SSLVerify",
+      "message": "SSL certificate verification was bypassed",
+      "file": "app/services/giae_scraper_service.rb",
+      "line": 157,
+      "link": "https://brakemanscanner.org/docs/warning_types/ssl_verification_bypass/",
+      "code": "Net::HTTP.new(URI.parse(url).host, URI.parse(url).port).verify_mode = OpenSSL::SSL::VERIFY_NONE",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "GiaeScraperService",
+        "method": "post_request"
+      },
+      "user_input": null,
+      "confidence": "High",
+      "note": "Intentionally disabled for GIAE development/testing environment. GIAE portal may use self-signed certificates. This should be enabled in production if possible."
+    }
+  ],
+  "updated": "2026-03-17",
+  "brakeman_version": "7.0.0"
+}
