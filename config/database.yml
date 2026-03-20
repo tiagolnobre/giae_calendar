@@ -10,7 +10,7 @@ default: &default
     synchronous: 'normal'
     temp_store: 'memory'
     mmap_size: '30000000000'
-    busy_timeout: 5000
+    busy_timeout: 15000
 
 development:
   <<: *default
@@ -26,7 +26,9 @@ test:
   database: storage/test.sqlite3
 
 production:
-  <<: *default
-  database: /data/production.sqlite3
-  # Production uses single database for all data including Solid Queue
-  # This ensures data consistency and simplifies backups
+  primary:
+    <<: *default
+    database: /data/production.sqlite3
+  queue:
+    <<: *default
+    database: /data/production_queue.sqlite3

@@ -58,4 +58,36 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     get calendar_path
     assert_redirected_to %r{/sign_in}
   end
+
+  test "should create session with remember me" do
+    post sign_in_path, params: {
+      email: @user.email,
+      password: "password123",
+      remember_me: "1"
+    }
+    assert cookies[:remember_token].present?
+  end
+
+  test "should not create session with blank email" do
+    post sign_in_path, params: {
+      email: "",
+      password: "password123"
+    }
+    assert_response :unprocessable_entity
+  end
+
+  test "should not create session with blank password" do
+    post sign_in_path, params: {
+      email: @user.email,
+      password: ""
+    }
+    assert_response :unprocessable_entity
+  end
+
+  test "should maintain session across requests" do
+    post sign_in_path, params: { email: @user.email, password: "password123" }
+    follow_redirect!
+    get calendar_path
+    assert_response :success
+  end
 end

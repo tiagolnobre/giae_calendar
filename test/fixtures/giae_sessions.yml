@@ -1,0 +1,27 @@
+active:
+  user: one
+  status: active
+  session_cookie_ciphertext: "encrypted_test_cookie"
+  refreshed_at: <%= 1.hour.ago %>
+  locked_by: ""
+
+expired:
+  user: two
+  status: expired
+  session_cookie_ciphertext: "encrypted_test_cookie"
+  refreshed_at: <%= 25.hours.ago %>
+  locked_by: ""
+
+refreshing:
+  user: one
+  status: refreshing
+  session_cookie_ciphertext: "encrypted_test_cookie"
+  refreshed_at: <%= 30.minutes.ago %>
+  locked_by: "test-job-123"
+  locked_at: <%= 1.minute.ago %>
+
+pending:
+  user: one
+  status: pending
+  session_cookie_ciphertext: ""
+  refreshed_at:

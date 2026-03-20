@@ -1,5 +1,28 @@
 #!/bin/bash -e
 
+echo "=== Docker Entrypoint Starting ==="
+
+# Function to check if queue tables exist
+check_queue_tables() {
+  local table_count=$(sqlite3 /data/production_queue.sqlite3 "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name LIKE 'solid_queue_%'" 2>/dev/null || echo "0")
+  echo "$table_count"
+}
+
+# Create queue database if it doesn't exist or if tables are missing
+if [ ! -f /data/production_queue.sqlite3 ]; then
+  echo "Creating queue database at /data/production_queue.sqlite3..."
+  sqlite3 /data/production_queue.sqlite3 < /rails/db/queue_schema.sql
+  echo "Queue database created successfully"
+elif [ "$(check_queue_tables)" -eq 0 ]; then
+  echo "Queue database exists but has no tables. Loading schema..."
+  sqlite3 /data/production_queue.sqlite3 < /rails/db/queue_schema.sql
+  echo "Queue database schema loaded successfully"
+else
+  echo "Queue database already exists with $(check_queue_tables) tables"
+fi
+
+echo "=== Starting Rails Application ==="
+
 # If running the rails server then create or migrate existing database
 if [ "${@: -2:1}" == "./bin/rails" ] && [ "${@: -1:1}" == "server" ]; then
   ./bin/rails db:prepare
@@ -7,6 +30,7 @@ fi
 
 # Start Solid Queue worker in background
 if [ "$RAILS_ENV" = "production" ]; then
+  echo "Starting Solid Queue..."
   bundle exec rake solid_queue:start &
 fi
 

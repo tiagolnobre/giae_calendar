@@ -4,7 +4,8 @@ class FetchSaldoDisponivelJob < ApplicationScraperJob
   queue_as :default
 
   around_enqueue do |job, block|
-    user_id = job.arguments.first
+    user = job.arguments.first
+    user_id = user.is_a?(User) ? user.id : user
     key = "fetch_saldo_#{user_id}"
 
     if Rails.cache.exist?(key)
@@ -20,10 +21,9 @@ class FetchSaldoDisponivelJob < ApplicationScraperJob
     end
   end
 
-  def perform(user_id)
-    GiaeDebug.log("FetchSaldoDisponivelJob started", { user_id: user_id, job_id: job_id })
-
-    user = User.find(user_id)
+  def perform(user)
+    user = user.is_a?(User) ? user : User.find(user)
+    GiaeDebug.log("FetchSaldoDisponivelJob started", { user_id: user.id, job_id: job_id })
     GiaeDebug.log("User found", { user_id: user.id, username: user.giae_username })
 
     Rails.logger.info "[FetchSaldoDisponivelJob] Starting for user #{user.id}"
@@ -46,11 +46,11 @@ class FetchSaldoDisponivelJob < ApplicationScraperJob
     end
   rescue GiaeSessionManager::SessionUnavailable => e
     GiaeDebug.log_error("SessionUnavailable error", e)
-    Rails.logger.info "[FetchSaldoDisponivelJob] Session unavailable for user #{user_id}: #{e.message}, will retry"
+    Rails.logger.info "[FetchSaldoDisponivelJob] Session unavailable for user #{user.id}: #{e.message}, will retry"
     raise
   rescue => e
     GiaeDebug.log_error("Unexpected error in job", e)
-    Rails.logger.error "[FetchSaldoDisponivelJob] Error for user #{user_id}: #{e.class}: #{e.message}"
+    Rails.logger.error "[FetchSaldoDisponivelJob] Error for user #{user.id}: #{e.class}: #{e.message}"
     raise
   end
 end

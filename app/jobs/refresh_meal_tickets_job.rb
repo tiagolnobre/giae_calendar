@@ -5,7 +5,8 @@ class RefreshMealTicketsJob < ApplicationScraperJob
 
   # Discard job if one is already running for this user
   around_enqueue do |job, block|
-    user_id = job.arguments.first
+    user = job.arguments.first
+    user_id = user.is_a?(User) ? user.id : user
     key = "refresh_meal_tickets_#{user_id}"
 
     if Rails.cache.exist?(key)
@@ -21,8 +22,8 @@ class RefreshMealTicketsJob < ApplicationScraperJob
     end
   end
 
-  def perform(user_id)
-    user = User.find(user_id)
+  def perform(user)
+    user = user.is_a?(User) ? user : User.find(user)
 
     Rails.logger.info "[RefreshMealTicketsJob] Starting refresh for user #{user.id}"
 
@@ -69,7 +70,7 @@ class RefreshMealTicketsJob < ApplicationScraperJob
       results
     end
   rescue GiaeSessionManager::SessionUnavailable => e
-    Rails.logger.info "[RefreshMealTicketsJob] Session unavailable for user #{user_id}: #{e.message}, will retry"
+    Rails.logger.info "[RefreshMealTicketsJob] Session unavailable for user #{user.id}: #{e.message}, will retry"
     raise
   end
 end

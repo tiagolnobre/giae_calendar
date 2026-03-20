@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -e
+
+echo "Setting up databases..."
+
+# Create queue database and load schema if it doesn't exist
+if [ ! -f /data/production_queue.sqlite3 ]; then
+  echo "Creating queue database..."
+  sqlite3 /data/production_queue.sqlite3 < /rails/db/queue_schema.sql
+  echo "Queue database created successfully"
+fi
+
+# Skip migrations - database already exists with schema
+echo "Database already initialized, skipping migrations"
+
+echo "Release completed successfully!"

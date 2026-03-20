@@ -1,0 +1,16 @@
+#!/bin/bash -e
+
+# Create queue database if it doesn't exist
+if [ ! -f /data/production_queue.sqlite3 ]; then
+  echo "Creating queue database..."
+  sqlite3 /data/production_queue.sqlite3 < /rails/db/queue_schema.sql
+  echo "Queue database created"
+fi
+
+# Start Solid Queue worker in background
+if [ "$RAILS_ENV" = "production" ]; then
+  bundle exec rake solid_queue:start &
+fi
+
+# Start the Rails server
+exec ./bin/rails server
