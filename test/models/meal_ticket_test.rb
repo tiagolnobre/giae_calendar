@@ -2,6 +2,7 @@ require "test_helper"
 
 class MealTicketTest < ActiveSupport::TestCase
   setup do
+    MealTicket.delete_all
     @user = User.create!(
       email: "test@example.com",
       password: "password123",

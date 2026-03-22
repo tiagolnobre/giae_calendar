@@ -143,7 +143,7 @@ class CalendarsControllerTest < ActionDispatch::IntegrationTest
     meal_ticket = meal_tickets(:one)
     get day_details_path(date: meal_ticket.date)
     assert_response :success
-    assert_match meal_ticket.date.to_s, response.body
+    assert_match I18n.l(meal_ticket.date, format: :long), response.body
   end
 
   test "day_details handles invalid date gracefully" do
@@ -152,13 +152,14 @@ class CalendarsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "refresh redirects when refresh already in progress" do
-    Rails.cache.write("refresh_meal_tickets_#{@user.id}", true)
+    User.any_instance.stubs(:refresh_in_progress?).returns(true)
 
-    post refresh_calendar_path
+    post refresh_calendar_path, as: :html
     assert_redirected_to %r{/calendar}
+    follow_redirect!
     assert_match(/already in progress/, flash[:alert])
 
-    Rails.cache.delete("refresh_meal_tickets_#{@user.id}")
+    User.any_instance.unstub(:refresh_in_progress)
   end
 
   test "refresh enqueues both jobs" do

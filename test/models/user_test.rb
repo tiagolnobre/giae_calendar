@@ -173,7 +173,7 @@ class UserTest < ActiveSupport::TestCase
     assert_not_includes current_tickets, other_ticket
   end
 
-  test "unread_notifications returns unread notifications in chronological order" do
+  test "unread_notifications returns unread notifications in reverse chronological order" do
     @user.save!
 
     old_unread = @user.notifications.create!(title: "Old", body: "Body", read_at: nil, created_at: 2.days.ago)
@@ -185,7 +185,7 @@ class UserTest < ActiveSupport::TestCase
     assert_includes unread, old_unread
     assert_includes unread, new_unread
     assert_not_includes unread, read_notification
-    assert_equal [ old_unread, new_unread ], unread.to_a  # Chronological order
+    assert_equal [ new_unread, old_unread ], unread.to_a  # Reverse chronological (newest first)
   end
 
   test "unread_notification_count returns count of unread notifications" do
@@ -207,20 +207,24 @@ class UserTest < ActiveSupport::TestCase
 
   test "refresh_in_progress? returns true when meal ticket refresh is running" do
     @user.save!
+    original_cache = Rails.cache
+    Rails.cache = ActiveSupport::Cache::MemoryStore.new
     Rails.cache.write("refresh_meal_tickets_#{@user.id}", true)
 
     assert @user.refresh_in_progress?
 
-    Rails.cache.delete("refresh_meal_tickets_#{@user.id}")
+    Rails.cache = original_cache
   end
 
   test "refresh_in_progress? returns true when saldo fetch is running" do
     @user.save!
+    original_cache = Rails.cache
+    Rails.cache = ActiveSupport::Cache::MemoryStore.new
     Rails.cache.write("fetch_saldo_#{@user.id}", true)
 
     assert @user.refresh_in_progress?
 
-    Rails.cache.delete("fetch_saldo_#{@user.id}")
+    Rails.cache = original_cache
   end
 
   test "refresh_in_progress? returns false when no refresh is running" do

@@ -2,6 +2,7 @@ require "test_helper"
 
 class NotificationTest < ActiveSupport::TestCase
   setup do
+    Notification.delete_all
     @user = users(:one)
     @notification = Notification.new(
       user: @user,

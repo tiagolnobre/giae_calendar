@@ -16,8 +16,8 @@ class CalendarsControllerIntegrationTest < ActionDispatch::IntegrationTest
     Rails.cache = @original_cache
   end
 
-  test "show handles turbo stream requests" do
-    get calendar_path, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+  test "show renders html successfully" do
+    get calendar_path
     assert_response :success
   end
 

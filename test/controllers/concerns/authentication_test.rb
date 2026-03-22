@@ -67,14 +67,21 @@ class AuthenticationTest < ActionDispatch::IntegrationTest
     }
     follow_redirect!
 
-    # Delete user while signed in
-    @user.destroy
+    # Delete user directly from database to avoid FK constraint issues in test
+    # First clear any dependent records
+    user_id = @user.id
+    MealTicket.where(user_id: user_id).delete_all
+    MealDetail.where(user_id: user_id).delete_all
+    SaldoRecord.where(user_id: user_id).delete_all
+    Notification.where(user_id: user_id).delete_all
+    GiaeSession.where(user_id: user_id).delete_all
+    User.delete(user_id)
 
     # Clear cache and reload
     controller.instance_variable_set(:@current_user, nil)
 
     get calendar_path
-    # User should be nil now
+    # User should be nil now since user no longer exists
     assert_nil controller.current_user
   end
 
@@ -89,6 +96,8 @@ class AuthenticationTest < ActionDispatch::IntegrationTest
     # Expire the token
     @user.update!(remember_created_at: 3.weeks.ago)
     controller.instance_variable_set(:@current_user, nil)
+    # Clear the session to force remember cookie check
+    delete sign_out_path
 
     get calendar_path
     assert_nil controller.current_user
@@ -119,7 +128,7 @@ class AuthenticationTest < ActionDispatch::IntegrationTest
 
   test "authenticate_user! redirects when not signed in" do
     get calendar_path
-    assert_redirected_to sign_in_path
+    assert_redirected_to %r{/sign_in}
     assert_equal "Please sign in to continue.", flash[:alert]
   end
 

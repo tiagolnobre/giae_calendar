@@ -18,8 +18,13 @@ class ApplicationHelperTest < ActionView::TestCase
   end
 
   test "day_classes returns gray background for weekend days in current month" do
+    saturday = if Date.today.saturday?
+      Date.today + 1.week
+    else
+      Date.today.next_occurring(:saturday)
+    end
     day = {
-      date: Date.today,
+      date: saturday,
       is_current_month: true,
       is_weekend: true,
       is_holiday: false
@@ -31,8 +36,13 @@ class ApplicationHelperTest < ActionView::TestCase
   end
 
   test "day_classes returns gray background for holidays in current month" do
+    monday = if Date.today.monday?
+      Date.today + 1.week
+    else
+      Date.today.next_occurring(:monday)
+    end
     day = {
-      date: Date.today,
+      date: monday,
       is_current_month: true,
       is_weekend: false,
       is_holiday: true
@@ -44,8 +54,10 @@ class ApplicationHelperTest < ActionView::TestCase
   end
 
   test "day_classes returns gray-50 for days outside current month" do
+    next_month = Date.today + 1.month
+    first_of_next_month = Date.new(next_month.year, next_month.month, 1)
     day = {
-      date: Date.today,
+      date: first_of_next_month,
       is_current_month: false,
       is_weekend: false,
       is_holiday: false
