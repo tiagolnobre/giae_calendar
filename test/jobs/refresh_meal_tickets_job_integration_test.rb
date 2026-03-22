@@ -11,6 +11,13 @@ class RefreshMealTicketsJobIntegrationTest < ActiveJob::TestCase
       giae_school_code: "161676"
     )
     @job = RefreshMealTicketsJob.new
+    # Use a real cache for these tests since around_enqueue uses Rails.cache
+    @original_cache = Rails.cache
+    Rails.cache = ActiveSupport::Cache::MemoryStore.new
+  end
+
+  teardown do
+    Rails.cache = @original_cache
   end
 
   test "around_enqueue prevents duplicate jobs" do
