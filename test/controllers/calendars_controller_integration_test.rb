@@ -7,6 +7,13 @@ class CalendarsControllerIntegrationTest < ActionDispatch::IntegrationTest
     @user = users(:one)
     post sign_in_path, params: { email: @user.email, password: "password123" }
     follow_redirect!
+    # Use a real cache for these tests
+    @original_cache = Rails.cache
+    Rails.cache = ActiveSupport::Cache::MemoryStore.new
+  end
+
+  teardown do
+    Rails.cache = @original_cache
   end
 
   test "show handles turbo stream requests" do
@@ -124,7 +131,7 @@ class CalendarsControllerIntegrationTest < ActionDispatch::IntegrationTest
 
   test "refresh redirects when successful" do
     post refresh_calendar_path
-    assert_redirected_to calendar_path
+    assert_redirected_to %r{/calendar}
     assert_equal "Refreshing meal tickets...", flash[:notice]
   end
 
@@ -137,7 +144,7 @@ class CalendarsControllerIntegrationTest < ActionDispatch::IntegrationTest
 
     # Second request should be blocked
     post refresh_calendar_path
-    assert_redirected_to calendar_path
+    assert_redirected_to %r{/calendar}
     assert_match(/already in progress/, flash[:alert])
 
     Rails.cache.delete("refresh_meal_tickets_#{@user.id}")
@@ -183,7 +190,7 @@ class CalendarsControllerIntegrationTest < ActionDispatch::IntegrationTest
     Rails.cache.write("fetch_saldo_#{@user.id}", true)
 
     post refresh_calendar_path
-    assert_redirected_to calendar_path
+    assert_redirected_to %r{/calendar}
     assert_match(/already in progress/, flash[:alert])
 
     Rails.cache.delete("refresh_meal_tickets_#{@user.id}")

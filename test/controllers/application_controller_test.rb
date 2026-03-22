@@ -59,14 +59,11 @@ class ApplicationControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "set_locale validates available locales" do
-    I18n.available_locales
-    I18n.stub :available_locales, [ :en, :pt ] do
-      post sign_in_path, params: { email: @user.email, password: "password123", locale: "fr" }
-      follow_redirect!
+    post sign_in_path, params: { email: @user.email, password: "password123", locale: "xyz" }
+    follow_redirect!
 
-      # Should fall back to default
-      assert_equal I18n.default_locale, I18n.locale
-    end
+    # Should fall back to default locale (xyz is not in available_locales)
+    assert_equal I18n.default_locale, I18n.locale
   end
 
   test "authenticates user before actions" do

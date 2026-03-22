@@ -8,6 +8,11 @@ class CalendarsController < ApplicationController
     @month = (params[:month].to_i > 0) ? params[:month].to_i : Date.today.month
     @year = (params[:year].to_i > 0) ? params[:year].to_i : Date.today.year
 
+    # Validate month and year are reasonable
+    unless @month.between?(1, 12) && @year.between?(2000, 2100)
+      redirect_to calendar_path and return
+    end
+
     @tickets = @user.meal_tickets_for_month(@month, @year)
     @tickets_by_date = @tickets.index_by(&:date)
 

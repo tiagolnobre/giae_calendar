@@ -2,6 +2,7 @@ pt:
   time:
     formats:
       long: "%d de %B de %Y, às %H:%M"
+      short: "%d %b, %H:%M"
   date:
     formats:
       long: "%d de %B de %Y"

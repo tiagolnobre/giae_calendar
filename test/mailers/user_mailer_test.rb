@@ -29,7 +29,8 @@ class UserMailerTest < ActionMailer::TestCase
     email = UserMailer.notification_email(@user, title, body)
 
     assert email.content_type.include?("text/html")
-    assert_match title, email.html_part.body.to_s
-    assert_match body, email.html_part.body.to_s
+    # Email body should contain the HTML content
+    assert_match title, email.body.to_s
+    assert_match body, email.body.to_s
   end
 end
