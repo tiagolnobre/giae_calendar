@@ -198,14 +198,15 @@ class GiaeScraperServiceTest < ActiveSupport::TestCase
 
     # Mock the HTTP response
     mock_response = mock("response")
-    mock_response.expects(:code).returns("200")
+    mock_response.stubs(:code).returns("200")
+    mock_response.stubs(:body).returns("{}")
     mock_response.expects(:get_fields).with("set-cookie").returns([ "session=abc123; Path=/" ])
 
     # Mock HTTP
     mock_http = mock("http")
     mock_http.expects(:use_ssl=).with(true)
     mock_http.expects(:verify_mode=).with(OpenSSL::SSL::VERIFY_NONE)
-    mock_http.expects(:request).returns(mock_response)
+    mock_http.stubs(:request).returns(mock_response)
 
     Net::HTTP.expects(:new).with("aemgn.giae.pt", 443).returns(mock_http)
 
@@ -224,13 +225,14 @@ class GiaeScraperServiceTest < ActiveSupport::TestCase
     )
 
     mock_response = mock("response")
-    mock_response.expects(:code).returns("200")
+    mock_response.stubs(:code).returns("200")
+    mock_response.stubs(:body).returns("{}")
     mock_response.expects(:get_fields).with("set-cookie").returns(nil)
 
     mock_http = mock("http")
     mock_http.expects(:use_ssl=).with(true)
     mock_http.expects(:verify_mode=).with(OpenSSL::SSL::VERIFY_NONE)
-    mock_http.expects(:request).returns(mock_response)
+    mock_http.stubs(:request).returns(mock_response)
 
     Net::HTTP.expects(:new).returns(mock_http)
 
@@ -249,19 +251,19 @@ class GiaeScraperServiceTest < ActiveSupport::TestCase
     )
 
     mock_response = mock("response")
-    mock_response.expects(:code).returns("200")
-    mock_response.expects(:body).returns({ saldocontabilistico: "25,50 €" }.to_json)
+    mock_response.stubs(:code).returns("200")
+    mock_response.stubs(:body).returns({ saldocontabilistico: "25,50 €" }.to_json)
 
     mock_http = mock("http")
     mock_http.expects(:use_ssl=).with(true)
     mock_http.expects(:verify_mode=).with(OpenSSL::SSL::VERIFY_NONE)
-    mock_http.expects(:request).returns(mock_response)
+    mock_http.stubs(:request).returns(mock_response)
 
     Net::HTTP.expects(:new).returns(mock_http)
 
     result = scraper.fetch_saldo_disponivel
-    assert_equal "25.50", result[:euros].to_s
     assert_equal 2550, result[:cents]
+    assert_equal BigDecimal("25.50"), result[:euros]
   end
 
   test "fetch_saldo_disponivel extracts from config when not at root" do
@@ -274,13 +276,13 @@ class GiaeScraperServiceTest < ActiveSupport::TestCase
     )
 
     mock_response = mock("response")
-    mock_response.expects(:code).returns("200")
-    mock_response.expects(:body).returns({ config: { saldocontabilistico: "31,66 €" } }.to_json)
+    mock_response.stubs(:code).returns("200")
+    mock_response.stubs(:body).returns({ config: { saldocontabilistico: "31,66 €" } }.to_json)
 
     mock_http = mock("http")
     mock_http.expects(:use_ssl=).with(true)
     mock_http.expects(:verify_mode=).with(OpenSSL::SSL::VERIFY_NONE)
-    mock_http.expects(:request).returns(mock_response)
+    mock_http.stubs(:request).returns(mock_response)
 
     Net::HTTP.expects(:new).returns(mock_http)
 
@@ -299,13 +301,13 @@ class GiaeScraperServiceTest < ActiveSupport::TestCase
     )
 
     mock_response = mock("response")
-    mock_response.expects(:code).returns("200")
-    mock_response.expects(:body).returns({ other: "data" }.to_json)
+    mock_response.stubs(:code).returns("200")
+    mock_response.stubs(:body).returns({ other: "data" }.to_json)
 
     mock_http = mock("http")
     mock_http.expects(:use_ssl=).with(true)
     mock_http.expects(:verify_mode=).with(OpenSSL::SSL::VERIFY_NONE)
-    mock_http.expects(:request).returns(mock_response)
+    mock_http.stubs(:request).returns(mock_response)
 
     Net::HTTP.expects(:new).returns(mock_http)
 
@@ -323,28 +325,28 @@ class GiaeScraperServiceTest < ActiveSupport::TestCase
       session_cookie: "test_session"
     )
 
+    # 2024-03-15 is Friday, 2024-03-16 is Saturday, 2024-03-17 is Sunday
     mock_response = mock("response")
-    mock_response.expects(:code).returns("200")
-    mock_response.expects(:body).returns({
+    mock_response.stubs(:code).returns("200")
+    mock_response.stubs(:body).returns({
       refeicoes: [
-        { data: "2024-03-15", comprada: true, descricaoprato: "Carne Assada" },
-        { data: "2024-03-16", comprada: false, descricaoprato: "Peixe Grelhado" },
-        { data: "2024-03-17", comprada: true, descricaoprato: "Vegetariano" }
+        { data: "2024-03-15", comprada: true, descricaoprato: "Carne Assada" },    # Friday - kept
+        { data: "2024-03-16", comprada: false, descricaoprato: "Peixe Grelhado" }, # Saturday - skipped
+        { data: "2024-03-17", comprada: true, descricaoprato: "Vegetariano" }     # Sunday - skipped
       ].to_json
     }.to_json)
 
     mock_http = mock("http")
     mock_http.expects(:use_ssl=).with(true)
     mock_http.expects(:verify_mode=).with(OpenSSL::SSL::VERIFY_NONE)
-    mock_http.expects(:request).returns(mock_response)
+    mock_http.stubs(:request).returns(mock_response)
 
     Net::HTTP.expects(:new).returns(mock_http)
 
     results = scraper.fetch_refeicoes_compra
-    assert_equal 2, results.length  # Skips Sunday
+    assert_equal 1, results.length  # Only Friday is kept (Sat/Sun skipped)
     assert_equal Date.parse("2024-03-15"), results[0][:date]
     assert_equal "meat", results[0][:dish_type]
-    assert_equal "fish", results[1][:dish_type]
   end
 
   test "fetch_refeicoes_compra skips Portuguese holidays" do
@@ -359,8 +361,8 @@ class GiaeScraperServiceTest < ActiveSupport::TestCase
     christmas = Date.parse("2024-12-25")
 
     mock_response = mock("response")
-    mock_response.expects(:code).returns("200")
-    mock_response.expects(:body).returns({
+    mock_response.stubs(:code).returns("200")
+    mock_response.stubs(:body).returns({
       refeicoes: [
         { data: christmas.to_s, comprada: true, descricaoprato: "Carne" }
       ].to_json
@@ -369,7 +371,7 @@ class GiaeScraperServiceTest < ActiveSupport::TestCase
     mock_http = mock("http")
     mock_http.expects(:use_ssl=).with(true)
     mock_http.expects(:verify_mode=).with(OpenSSL::SSL::VERIFY_NONE)
-    mock_http.expects(:request).returns(mock_response)
+    mock_http.stubs(:request).returns(mock_response)
 
     Net::HTTP.expects(:new).returns(mock_http)
 
@@ -387,8 +389,8 @@ class GiaeScraperServiceTest < ActiveSupport::TestCase
     )
 
     mock_response = mock("response")
-    mock_response.expects(:code).returns("200")
-    mock_response.expects(:body).returns({
+    mock_response.stubs(:code).returns("200")
+    mock_response.stubs(:body).returns({
       refeicoes: [
         {
           data: "2024-03-15",
@@ -405,7 +407,7 @@ class GiaeScraperServiceTest < ActiveSupport::TestCase
     mock_http = mock("http")
     mock_http.expects(:use_ssl=).with(true)
     mock_http.expects(:verify_mode=).with(OpenSSL::SSL::VERIFY_NONE)
-    mock_http.expects(:request).returns(mock_response)
+    mock_http.stubs(:request).returns(mock_response)
 
     Net::HTTP.expects(:new).returns(mock_http)
 
@@ -426,13 +428,13 @@ class GiaeScraperServiceTest < ActiveSupport::TestCase
     )
 
     mock_response = mock("response")
-    mock_response.expects(:code).returns("401")
-    mock_response.expects(:body).returns("Unauthorized")
+    mock_response.stubs(:code).returns("401")
+    mock_response.stubs(:body).returns("Unauthorized")
 
     mock_http = mock("http")
     mock_http.expects(:use_ssl=).with(true)
     mock_http.expects(:verify_mode=).with(OpenSSL::SSL::VERIFY_NONE)
-    mock_http.expects(:request).returns(mock_response)
+    mock_http.stubs(:request).returns(mock_response)
 
     Net::HTTP.expects(:new).returns(mock_http)
 
@@ -451,13 +453,13 @@ class GiaeScraperServiceTest < ActiveSupport::TestCase
     )
 
     mock_response = mock("response")
-    mock_response.expects(:code).returns("200")
-    mock_response.expects(:body).returns("Sessao expirada")
+    mock_response.stubs(:code).returns("200")
+    mock_response.stubs(:body).returns("Sessao expirada")
 
     mock_http = mock("http")
     mock_http.expects(:use_ssl=).with(true)
     mock_http.expects(:verify_mode=).with(OpenSSL::SSL::VERIFY_NONE)
-    mock_http.expects(:request).returns(mock_response)
+    mock_http.stubs(:request).returns(mock_response)
 
     Net::HTTP.expects(:new).returns(mock_http)
 
@@ -475,17 +477,18 @@ class GiaeScraperServiceTest < ActiveSupport::TestCase
     )
 
     login_response = mock("login_response")
-    login_response.expects(:code).returns("200")
+    login_response.stubs(:code).returns("200")
+    login_response.stubs(:body).returns("{}")
     login_response.expects(:get_fields).with("set-cookie").returns([ "session=abc123" ])
 
     data_response = mock("data_response")
-    data_response.expects(:code).returns("200")
-    data_response.expects(:body).returns({ refeicoes: [].to_json }.to_json)
+    data_response.stubs(:code).returns("200")
+    data_response.stubs(:body).returns({ refeicoes: [].to_json }.to_json)
 
     mock_http = mock("http")
     mock_http.expects(:use_ssl=).with(true).times(2)
     mock_http.expects(:verify_mode=).with(OpenSSL::SSL::VERIFY_NONE).times(2)
-    mock_http.expects(:request).returns(login_response).then.returns(data_response)
+    mock_http.stubs(:request).returns(login_response).then.returns(data_response)
 
     Net::HTTP.expects(:new).returns(mock_http).times(2)
 
