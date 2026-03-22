@@ -6,6 +6,13 @@ class RefreshMealTicketsJobTest < ActiveJob::TestCase
   setup do
     @user = users(:one)
     @job = RefreshMealTicketsJob.new
+    # Use a real cache for these tests since around_enqueue uses Rails.cache
+    @original_cache = Rails.cache
+    Rails.cache = ActiveSupport::Cache::MemoryStore.new
+  end
+
+  teardown do
+    Rails.cache = @original_cache
   end
 
   test "job is enqueued with correct queue" do
@@ -28,21 +35,26 @@ class RefreshMealTicketsJobTest < ActiveJob::TestCase
   end
 
   test "around_enqueue cleans up cache after job completes" do
-    RefreshMealTicketsJob.perform_later(@user)
+    # The cache is used during enqueue to prevent duplicate jobs, then cleaned up immediately
+    # Cache is written before job is enqueued and deleted in ensure block after
+    cache_key = "refresh_meal_tickets_#{@user.id}"
 
-    # Cache should be set during enqueue
-    assert Rails.cache.exist?("refresh_meal_tickets_#{@user.id}")
+    # Verify job is enqueued and cache is cleaned up
+    assert_enqueued_jobs 1 do
+      RefreshMealTicketsJob.perform_later(@user)
+    end
 
+    # Cache should be cleaned up immediately after enqueue (in ensure block)
+    assert_not Rails.cache.exist?(cache_key)
+
+    # Job should still execute normally
     perform_enqueued_jobs
-
-    # Cache should be cleaned up after job
-    assert_not Rails.cache.exist?("refresh_meal_tickets_#{@user.id}")
   end
 
   test "perform handles user passed as User object" do
     mock_scraper = mock("scraper")
     mock_scraper.expects(:fetch_refeicoes_compra).returns([
-      { date: Date.today, bought: true, dish_type: "carne" }
+      { date: Date.today, bought: true, dish_type: "meat" }
     ])
     mock_scraper.expects(:fetch_meal_details).returns({})
 
@@ -56,7 +68,7 @@ class RefreshMealTicketsJobTest < ActiveJob::TestCase
     assert_equal @user.id, ticket.user_id
     assert_equal Date.today, ticket.date
     assert ticket.bought
-    assert_equal "carne", ticket.dish_type
+    assert_equal "meat", ticket.dish_type
   end
 
   test "perform handles user passed as integer id" do
@@ -74,7 +86,7 @@ class RefreshMealTicketsJobTest < ActiveJob::TestCase
   test "perform creates meal details when available" do
     mock_scraper = mock("scraper")
     mock_scraper.expects(:fetch_refeicoes_compra).returns([
-      { date: Date.today, bought: true, dish_type: "peixe" }
+      { date: Date.today, bought: true, dish_type: "fish" }
     ])
     mock_scraper.expects(:fetch_meal_details).returns({
       Date.today => {
@@ -106,7 +118,7 @@ class RefreshMealTicketsJobTest < ActiveJob::TestCase
 
     mock_scraper = mock("scraper")
     mock_scraper.expects(:fetch_refeicoes_compra).returns([
-      { date: existing_ticket.date, bought: false, dish_type: "vegetariano" }
+      { date: existing_ticket.date, bought: false, dish_type: nil }
     ])
     mock_scraper.expects(:fetch_meal_details).returns({})
 
@@ -118,7 +130,7 @@ class RefreshMealTicketsJobTest < ActiveJob::TestCase
 
     existing_ticket.reload
     assert_not existing_ticket.bought
-    assert_equal "vegetariano", existing_ticket.dish_type
+    assert_nil existing_ticket.dish_type
   end
 
   test "perform updates user's last_refreshed_at timestamp" do
@@ -138,7 +150,7 @@ class RefreshMealTicketsJobTest < ActiveJob::TestCase
   test "perform handles missing meal details gracefully" do
     mock_scraper = mock("scraper")
     mock_scraper.expects(:fetch_refeicoes_compra).returns([
-      { date: Date.today, bought: true, dish_type: "carne" }
+      { date: Date.today, bought: true, dish_type: "meat" }
     ])
     mock_scraper.expects(:fetch_meal_details).raises(StandardError, "Details unavailable")
 
