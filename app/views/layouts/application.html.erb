@@ -32,8 +32,80 @@
     <link rel="apple-touch-icon" href="/icon.png">
 
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
-<%= javascript_importmap_tags %>
+    <%= javascript_importmap_tags %>
     <%= Sentry.get_trace_propagation_meta.html_safe %>
+  </head>
+  <body class="bg-gray-50">
+    <% if user_signed_in? %>
+      <nav class="bg-white border-b border-gray-200 px-4 py-3">
+        <div class="max-w-md mx-auto flex items-center justify-between">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" class="h-8 w-8">
+            <rect x="0" y="0" width="64" height="64" rx="6" ry="6" fill="#012a4a"/>
+            <text x="50%" y="55%" text-anchor="middle" dominant-baseline="middle" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-weight="800" font-size="22" letter-spacing="1" fill="#ffffff">GIAE</text>
+          </svg>
+          <div class="flex items-center gap-4">
+            <% latest_saldo = SaldoRecord.latest_for_user(current_user) %>
+            <% if latest_saldo %>
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                <%= number_to_currency(latest_saldo.cents / 100.0, unit: "€", separator: ",", delimiter: ".") %>
+              </span>
+            <% end %>
+            <% has_notifications = current_user.notifications.unread.any? %>
+            <div class="relative" data-controller="dropdown">
+              <button type="button" data-action="dropdown#toggle" class="relative text-gray-600 hover:text-gray-800">
+                <% if has_notifications %>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-bell-dot"><path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M11.68 2.009A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673c-.824-.85-1.678-1.731-2.21-3.348"/><circle cx="18" cy="5" r="3"/></svg>
+                <% else %>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-bell"><path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/></svg>
+                <% end %>
+              </button>
+              <div data-dropdown-target="menu" class="hidden absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+                <div class="p-3 border-b border-gray-100">
+                  <span class="font-semibold text-gray-800"><%= t("nav.notifications") %></span>
+                </div>
+                <div class="max-h-80 overflow-y-auto">
+                  <% notifications = current_user.notifications.order(created_at: :desc).limit(10) %>
+                  <% if notifications.any? %>
+                    <% notifications.each do |notification| %>
+                      <div class="p-3 border-b border-gray-50 hover:bg-gray-50 <%= notification.read_at ? 'opacity-60' : '' %>">
+                        <p class="text-sm text-gray-800"><%= notification.body %></p>
+                        <p class="text-xs text-gray-500 mt-1"><%= l notification.created_at, format: :short %></p>
+                        <% unless notification.read_at %>
+                          <%= button_to t("nav.mark_read"),
+                              mark_notification_read_path(notification),
+                              method: :patch,
+                              class: "text-xs text-blue-600 hover:text-blue-800 mt-1" %>
+                        <% end %>
+                      </div>
+                    <% end %>
+                  <% else %>
+                    <p class="p-4 text-sm text-gray-500 text-center"><%= t("nav.no_notifications") %></p>
+                  <% end %>
+                </div>
+                <%= link_to t("nav.view_all"), notifications_path, class: "block p-3 text-center text-sm text-blue-600 hover:text-blue-800 border-t border-gray-100" %>
+              </div>
+            </div>
+            <%= button_to t("nav.sign_out"), sign_out_path,
+                method: :delete,
+                class: "text-sm text-gray-600 hover:text-gray-800" %>
+          </div>
+        </div>
+      </nav>
+    <% end %>
+
+    <% if notice %>
+      <div class="max-w-md mx-auto mt-4 px-4">
+        <div class="bg-green-50 text-green-800 px-4 py-3 rounded-lg text-sm"><%= notice %></div>
+      </div>
+    <% end %>
+
+    <% if alert %>
+      <div class="max-w-md mx-auto mt-4 px-4">
+        <div class="bg-red-50 text-red-800 px-4 py-3 rounded-lg text-sm"><%= alert %></div>
+      </div>
+    <% end %>
+
+    <%= yield %>
 
     <% if Rails.env.production? %>
     <script>
