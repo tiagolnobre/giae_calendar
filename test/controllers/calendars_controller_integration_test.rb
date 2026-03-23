@@ -39,27 +39,31 @@ class CalendarsControllerIntegrationTest < ActionDispatch::IntegrationTest
   end
 
   test "show displays bought tickets with correct styling" do
+    # Use next Monday to ensure the day is displayed (not weekend)
+    next_monday = Date.today.next_occurring(:monday)
     MealTicket.create!(
       user: @user,
-      date: Date.today,
+      date: next_monday,
       bought: true,
       dish_type: "meat"
     )
 
-    get calendar_path
+    get calendar_path(month: next_monday.month, year: next_monday.year)
     assert_response :success
     # Should show meat icon for bought ticket
     assert_match(/lucide-beef/, response.body)
   end
 
   test "show displays not bought tickets" do
+    # Use next Monday to ensure the day is displayed (not weekend)
+    next_monday = Date.today.next_occurring(:monday)
     MealTicket.create!(
       user: @user,
-      date: Date.today,
+      date: next_monday,
       bought: false
     )
 
-    get calendar_path
+    get calendar_path(month: next_monday.month, year: next_monday.year)
     assert_response :success
   end
 
@@ -232,8 +236,9 @@ class CalendarsControllerIntegrationTest < ActionDispatch::IntegrationTest
     get calendar_path
     assert_response :success
 
-    # Should have refresh button
-    assert_select "form[action='#{refresh_calendar_path}']", minimum: 1
+    # Should have refresh button (button_to generates a form with POST to refresh_calendar_path)
+    # The locale is appended to the action URL
+    assert_select "form[action^='/calendar/refresh']"
   end
 
   test "show handles leap year correctly" do

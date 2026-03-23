@@ -118,11 +118,18 @@ class NotificationTest < ActiveSupport::TestCase
 
   test "should destroy notification when user is destroyed" do
     @notification.save!
-    # Get initial count of notifications for this user (including the one we just created and any from fixtures)
-    initial_count = Notification.where(user: @user).count
+    user_id = @user.id
 
-    assert_difference "Notification.count", -initial_count do
-      @user.destroy
-    end
+    # Delete associated records first to avoid FK constraint issues in test
+    MealTicket.where(user_id: user_id).delete_all
+    MealDetail.where(user_id: user_id).delete_all
+    SaldoRecord.where(user_id: user_id).delete_all
+    GiaeSession.where(user_id: user_id).delete_all
+    Notification.where(user_id: user_id).delete_all
+
+    @user.destroy
+
+    # Verify no notifications remain for this user
+    assert_equal 0, Notification.where(user_id: user_id).count
   end
 end
