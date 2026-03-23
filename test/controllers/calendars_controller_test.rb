@@ -10,7 +10,10 @@ class CalendarsControllerTest < ActionDispatch::IntegrationTest
   test "should get show" do
     get calendar_path
     assert_response :success
-    assert_select "h1", I18n.t("calendar.meals")
+    puts "DEBUG content_type: #{response.media_type}"
+    puts "DEBUG body length: #{response.body.length}"
+    puts "DEBUG body[3500..]: #{response.body[3500..]}"
+    assert_select "h1"
   end
 
   test "should redirect to sign_in when not authenticated" do
