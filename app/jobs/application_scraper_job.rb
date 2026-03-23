@@ -21,6 +21,12 @@ class ApplicationScraperJob < ApplicationJob
     attempts: 3,
     jitter: 0
 
+  # Retry on access denied (will trigger re-login)
+  retry_on GiaeScraperService::AccessDenied,
+    wait: 10.seconds,
+    attempts: 5,
+    jitter: 0
+
   protected
 
   def with_session(user)
