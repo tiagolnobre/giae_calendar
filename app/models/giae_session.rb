@@ -104,9 +104,17 @@ class GiaeSession < ApplicationRecord
 
   def encryptor
     @encryptor ||= ActiveSupport::MessageEncryptor.new(
-      Rails.application.credentials.secret_key_base[0..31],
+      secret_key_base[0..31],
       cipher: "aes-256-gcm",
       serializer: JSON
     )
+  end
+
+  private
+
+  def secret_key_base
+    Rails.application.credentials.secret_key_base ||
+      ENV.fetch("SECRET_KEY_BASE", nil) ||
+      "fallback-test-key-for-test-env-only"
   end
 end
