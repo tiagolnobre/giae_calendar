@@ -10,7 +10,7 @@
 #     schedule: at 5am every day
 
 notify_upcoming_meal_tickets:
-  class: NotifyUpcomingMealTicketsJob
+  class: RefreshStaleMealTicketsJob
   queue: default
   schedule: at 8pm * * 0-4
 # production:
