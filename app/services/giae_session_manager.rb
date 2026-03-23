@@ -33,11 +33,15 @@ class GiaeSessionManager
       GiaeDebug.log("Request completed successfully")
       result
     rescue GiaeScraperService::SessionExpired => e
-      # Detected expired session during request
       session.transition_to_expired!
       GiaeDebug.log_error("Session expired during request", e)
       Rails.logger.warn "[GiaeSessionManager] Session expired during request for user #{@user.id}"
       raise SessionUnavailable, "Session expired, job will retry"
+    rescue GiaeScraperService::AccessDenied => e
+      session.transition_to_expired!
+      GiaeDebug.log_error("Access denied during request", e)
+      Rails.logger.warn "[GiaeSessionManager] Access denied for user #{@user.id}, forcing new session"
+      raise SessionUnavailable, "Access denied, forcing new session"
     end
   end
 

@@ -9,6 +9,7 @@ class GiaeScraperService
   class Error < StandardError; end
   class LoginError < Error; end
   class SessionExpired < Error; end
+  class AccessDenied < Error; end
 
   # Default school code for GIAE
   DEFAULT_SCHOOL_CODE = "161676"
@@ -198,6 +199,11 @@ class GiaeScraperService
       raise SessionExpired, "Session has expired (HTTP #{response.code})"
     end
 
+    # Detect access denied
+    if response.code == "403" || access_denied_response?(response.body)
+      raise AccessDenied, "Access denied (HTTP #{response.code})"
+    end
+
     unless response.code == "200"
       raise("Request failed with status: #{response.code}, body: #{response.body[0..200]}")
     end
@@ -208,10 +214,8 @@ class GiaeScraperService
   def session_expired_response?(body)
     return false unless body.present?
 
-    # Convert to UTF-8 with error handling for binary responses
     body_utf8 = body.to_s.encode("UTF-8", invalid: :replace, undef: :replace, replace: "?")
 
-    # Check for common session expiration indicators
     indicators = [
       "sessao expirada",
       "session expired",
@@ -219,6 +223,22 @@ class GiaeScraperService
       "nao autenticado",
       "não autenticado",
       "not authenticated"
+    ]
+
+    indicators.any? { |indicator| body_utf8.downcase.include?(indicator) }
+  end
+
+  def access_denied_response?(body)
+    return false unless body.present?
+
+    body_utf8 = body.to_s.encode("UTF-8", invalid: :replace, undef: :replace, replace: "?")
+
+    indicators = [
+      "access denied",
+      "acesso negado",
+      "proibido",
+      "forbidden",
+      "unauthorized"
     ]
 
     indicators.any? { |indicator| body_utf8.downcase.include?(indicator) }
