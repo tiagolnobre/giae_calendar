@@ -6,6 +6,8 @@ class PushSubscription < ApplicationRecord
   encrypts :p256dh, :auth
 
   validates :endpoint, presence: true, uniqueness: { scope: :user_id }
+  validates :p256dh, presence: true
+  validates :auth, presence: true
 
   def send_push(title:, body:, url: nil)
     data = {
