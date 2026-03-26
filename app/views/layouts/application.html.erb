@@ -62,17 +62,29 @@
                   btn.textContent = 'Enable Notifications';
                   btn.classList.remove('bg-green-500', 'hover:bg-green-600');
                   btn.classList.add('bg-blue-500', 'hover:bg-blue-600');
+                  alert('unsubscribed!');
                 } else {
                   // Subscribe
+                  alert('starting subscribe');
                   var perm = await Notification.requestPermission();
+                  alert('permission: ' + perm);
                   if (perm !== 'granted') { return; }
+                  alert('getting service worker');
                   var reg = await navigator.serviceWorker.ready;
-                  var sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array('<%= Rails.application.credentials.dig(:webpush, :vapid_public_key) || ENV.fetch("VAPID_PUBLIC_KEY", "") %>') });
-                  await fetch('/push_subscriptions', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': '<%= form_authenticity_token %>' }, body: JSON.stringify({ subscription: sub.toJSON() }) });
-                  btn.dataset.isSubscribed = 'true';
-                  btn.textContent = 'Notifications: ON';
-                  btn.classList.remove('bg-blue-500', 'hover:bg-blue-600');
-                  btn.classList.add('bg-green-500', 'hover:bg-green-600');
+                  alert('got SW');
+                  var vapidKey = '<%= Rails.application.credentials.dig(:webpush, :vapid_public_key) || ENV.fetch("VAPID_PUBLIC_KEY", "") %>';
+                  alert('vapid key: ' + vapidKey.substring(0, 20) + '...');
+                  var sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(vapidKey) });
+                  alert('subscribed locally, sending to backend');
+                  var response = await fetch('/push_subscriptions', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': '<%= form_authenticity_token %>' }, body: JSON.stringify({ subscription: sub.toJSON() }) });
+                  alert('backend response: ' + response.status);
+                  if (response.ok) {
+                    btn.dataset.isSubscribed = 'true';
+                    btn.textContent = 'Notifications: ON';
+                    btn.classList.remove('bg-blue-500', 'hover:bg-blue-600');
+                    btn.classList.add('bg-green-500', 'hover:bg-green-600');
+                    alert('subscribed!');
+                  }
                 }
               });
               
