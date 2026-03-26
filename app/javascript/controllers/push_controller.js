@@ -30,6 +30,68 @@ export default class extends Controller {
     this.updateButton()
   }
 
+  async initialize() {
+    // Store reference to controller for onclick access
+    this.element.dataset.pushController = this
+    
+    this.boundCheckVisibility = this.checkVisibility.bind(this)
+    document.addEventListener('turbo:load', this.boundCheckVisibility)
+    this.checkVisibility()
+  }
+
+  handleSubscribeClick(btn) {
+    if (this.isSubscribedValue) {
+      this.handleUnsubscribe(btn)
+    } else {
+      this.handleSubscribe(btn)
+    }
+  }
+
+  async handleSubscribe(btn) {
+    const permission = await Notification.requestPermission()
+    if (permission !== "granted") {
+      return
+    }
+
+    const registration = await navigator.serviceWorker.ready
+    const subscription = await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: this.urlBase64ToUint8Array(this.publicKeyValue)
+    })
+
+    const response = await fetch("/push_subscriptions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-Token": this.getCSRFToken()
+      },
+      body: JSON.stringify({ subscription: subscription.toJSON() })
+    })
+
+    if (response.ok) {
+      this.isSubscribedValue = true
+      this.updateButton()
+    }
+  }
+
+  async handleUnsubscribe(btn) {
+    const registration = await navigator.serviceWorker.ready
+    const subscription = await registration.pushManager.getSubscription()
+
+    if (subscription) {
+      await subscription.unsubscribe()
+      await fetch(`/push_subscriptions?endpoint=${encodeURIComponent(subscription.endpoint)}`, {
+        method: "DELETE",
+        headers: {
+          "X-CSRF-Token": this.getCSRFToken()
+        }
+      })
+    }
+
+    this.isSubscribedValue = false
+    this.updateButton()
+  }
+
   async subscribe(event) {
     event.preventDefault()
 
