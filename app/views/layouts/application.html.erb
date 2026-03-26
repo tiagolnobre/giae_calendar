@@ -46,10 +46,45 @@
             </svg>
           <% end %>
           <div class="flex items-center gap-2 sm:gap-4" data-controller="push" data-push-public-key-value="<%= Rails.application.credentials.dig(:webpush, :vapid_public_key) || ENV.fetch("VAPID_PUBLIC_KEY", "") %>" data-push-is-subscribed-value="<%= current_user.push_subscriptions.any? %>">
-            <button type="button" class="text-xs sm:text-sm px-2 sm:px-3 py-1 rounded bg-blue-500 text-white hover:bg-blue-600 whitespace-nowrap cursor-pointer touch-manipulation" id="push-btn">
+            <button type="button" class="text-xs sm:text-sm px-2 sm:px-3 py-1 rounded bg-blue-500 text-white hover:bg-blue-600 whitespace-nowrap cursor-pointer touch-manipulation" id="push-btn" data-is-subscribed="<%= current_user.push_subscriptions.any? %>">
               <%= current_user.push_subscriptions.any? ? "Notifications: ON" : "Enable Notifications" %>
             </button>
-            <script>document.getElementById('push-btn').addEventListener('click', function() { alert('click'); if(window.pushControllerSubscribe) window.pushControllerSubscribe() })</script>
+            <script>
+              document.getElementById('push-btn').addEventListener('click', async function() {
+                var btn = this;
+                var isSubscribed = btn.dataset.isSubscribed === 'true';
+                alert('clicked, isSubscribed=' + isSubscribed);
+                
+                if (isSubscribed) {
+                  // Unsubscribe
+                  await fetch('/push_subscriptions?endpoint=', { method: 'DELETE', headers: { 'X-CSRF-Token': '<%= form_authenticity_token %>' } });
+                  btn.dataset.isSubscribed = 'false';
+                  btn.textContent = 'Enable Notifications';
+                  btn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                  btn.classList.add('bg-blue-500', 'hover:bg-blue-600');
+                } else {
+                  // Subscribe
+                  var perm = await Notification.requestPermission();
+                  if (perm !== 'granted') { return; }
+                  var reg = await navigator.serviceWorker.ready;
+                  var sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array('<%= Rails.application.credentials.dig(:webpush, :vapid_public_key) || ENV.fetch("VAPID_PUBLIC_KEY", "") %>') });
+                  await fetch('/push_subscriptions', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': '<%= form_authenticity_token %>' }, body: JSON.stringify({ subscription: sub.toJSON() }) });
+                  btn.dataset.isSubscribed = 'true';
+                  btn.textContent = 'Notifications: ON';
+                  btn.classList.remove('bg-blue-500', 'hover:bg-blue-600');
+                  btn.classList.add('bg-green-500', 'hover:bg-green-600');
+                }
+              });
+              
+              function urlBase64ToUint8Array(base64String) {
+                var padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+                var base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+                var rawData = window.atob(base64);
+                var outputArray = new Uint8Array(rawData.length);
+                for (var i = 0; i < rawData.length; ++i) { outputArray[i] = rawData.charCodeAt(i); }
+                return outputArray;
+              }
+            </script>
               <%= current_user.push_subscriptions.any? ? "Notifications: ON" : "Enable Notifications" %>
             </button>
             <% latest_saldo = SaldoRecord.latest_for_user(current_user) %>
