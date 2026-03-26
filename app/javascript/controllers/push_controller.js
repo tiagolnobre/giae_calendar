@@ -8,18 +8,22 @@ export default class extends Controller {
   }
 
   connect() {
-    console.log('push controller connected')
-    window.handlePushButtonClick = () => {
-      alert('handleSubscribeClick called')
-      const isSubscribed = this.isSubscribedValue === true || this.isSubscribedValue === "true"
-      if (isSubscribed) {
+    // Force run on next frame to ensure DOM is ready
+    requestAnimationFrame(() => {
+      this.runSetup()
+    })
+  }
+
+  runSetup() {
+    // Make handler globally available
+    window.pushControllerSubscribe = () => {
+      if (this.isSubscribedValue === true || this.isSubscribedValue === "true") {
         this.handleUnsubscribe()
       } else {
         this.handleSubscribe()
       }
     }
     
-    this.element.dataset.pushController = this
     this.checkVisibility()
   }
 
@@ -27,13 +31,10 @@ export default class extends Controller {
     if (!("Notification" in window) || !("serviceWorker" in navigator)) {
       return
     }
-
     if (!this.publicKeyValue) {
       return
     }
-
     this.element.classList.remove("hidden")
-    this.updateButton()
   }
 
   async handleSubscribe() {

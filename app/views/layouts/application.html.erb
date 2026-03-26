@@ -49,7 +49,7 @@
             <button type="button" class="text-xs sm:text-sm px-2 sm:px-3 py-1 rounded bg-blue-500 text-white hover:bg-blue-600 whitespace-nowrap cursor-pointer touch-manipulation" id="push-btn">
               <%= current_user.push_subscriptions.any? ? "Notifications: ON" : "Enable Notifications" %>
             </button>
-            <script>document.getElementById('push-btn').addEventListener('click', function() { alert('btn clicked'); window.handlePushButtonClick && window.handlePushButtonClick() })</script>
+            <script>document.getElementById('push-btn').addEventListener('click', function() { alert('click'); if(window.pushControllerSubscribe) window.pushControllerSubscribe() })</script>
               <%= current_user.push_subscriptions.any? ? "Notifications: ON" : "Enable Notifications" %>
             </button>
             <% latest_saldo = SaldoRecord.latest_for_user(current_user) %>
