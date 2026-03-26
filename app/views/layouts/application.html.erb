@@ -46,7 +46,7 @@
             </svg>
           <% end %>
           <div class="flex items-center gap-2 sm:gap-4" data-controller="push" data-push-public-key-value="<%= Rails.application.credentials.dig(:webpush, :vapid_public_key) || ENV.fetch("VAPID_PUBLIC_KEY", "") %>" data-push-is-subscribed-value="<%= current_user.push_subscriptions.any? %>">
-            <button type="button" data-push-subscribe-target="button" class="text-xs sm:text-sm px-2 sm:px-3 py-1 rounded bg-blue-500 text-white hover:bg-blue-600 whitespace-nowrap">
+            <button type="button" data-push-subscribe-target="button" class="text-xs sm:text-sm px-2 sm:px-3 py-1 rounded bg-blue-500 text-white hover:bg-blue-600 whitespace-nowrap cursor-pointer touch-manipulation">
               <%= current_user.push_subscriptions.any? ? "Notifications: ON" : "Enable Notifications" %>
             </button>
             <% latest_saldo = SaldoRecord.latest_for_user(current_user) %>
@@ -57,7 +57,7 @@
             <% end %>
             <% has_notifications = current_user.notifications.unread.any? %>
             <div class="relative" data-controller="dropdown">
-              <button type="button" data-action="dropdown#toggle" class="relative text-gray-600 hover:text-gray-800">
+              <button type="button" data-action="dropdown#toggle" class="relative text-gray-600 hover:text-gray-800 touch-manipulation p-1">
                 <% if has_notifications %>
                   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-bell-dot"><path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M11.68 2.009A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673c-.824-.85-1.678-1.731-2.21-3.348"/><circle cx="18" cy="5" r="3"/></svg>
                 <% else %>
@@ -92,7 +92,7 @@
             </div>
             <%= button_to t("nav.sign_out"), sign_out_path,
                 method: :delete,
-                class: "text-xs sm:text-sm text-gray-600 hover:text-gray-800 whitespace-nowrap" %>
+                class: "text-xs sm:text-sm text-gray-600 hover:text-gray-800 whitespace-nowrap touch-manipulation px-1 py-1" %>
           </div>
         </div>
       </nav>
