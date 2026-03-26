@@ -7,14 +7,20 @@ export default class extends Controller {
     isSubscribed: Boolean
   }
 
-  async initialize() {
-    this.boundCheckVisibility = this.checkVisibility.bind(this)
-    document.addEventListener('turbo:load', this.boundCheckVisibility)
+  connect() {
+    console.log('push controller connected')
+    window.handlePushButtonClick = () => {
+      alert('handleSubscribeClick called')
+      const isSubscribed = this.isSubscribedValue === true || this.isSubscribedValue === "true"
+      if (isSubscribed) {
+        this.handleUnsubscribe()
+      } else {
+        this.handleSubscribe()
+      }
+    }
+    
+    this.element.dataset.pushController = this
     this.checkVisibility()
-  }
-
-  disconnect() {
-    document.removeEventListener('turbo:load', this.boundCheckVisibility)
   }
 
   checkVisibility() {
@@ -28,24 +34,6 @@ export default class extends Controller {
 
     this.element.classList.remove("hidden")
     this.updateButton()
-  }
-
-  initialize() {
-    window.handlePushButtonClick = () => this.handleSubscribeClick()
-    this.element.dataset.pushController = this
-    
-    this.boundCheckVisibility = this.checkVisibility.bind(this)
-    document.addEventListener('turbo:load', this.boundCheckVisibility)
-    this.checkVisibility()
-  }
-
-  handleSubscribeClick() {
-    const isSubscribed = this.isSubscribedValue === true || this.isSubscribedValue === "true"
-    if (isSubscribed) {
-      this.handleUnsubscribe()
-    } else {
-      this.handleSubscribe()
-    }
   }
 
   async handleSubscribe() {
