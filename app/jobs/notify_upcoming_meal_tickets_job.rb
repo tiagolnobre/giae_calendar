@@ -26,7 +26,7 @@ class NotifyUpcomingMealTicketsJob < ApplicationJob
 
     notification_types = []
     notification_types << :in_app if user.in_app_notifications_enabled?
-    # notification_types << :email if user.email_notifications_enabled? # let's keep this one out for now
+    notification_types << :email if user.email_notifications_enabled?
     notification_types << :web_push if user.push_subscriptions.any?
 
     NotificationService.new(user).notify(title, body, types: notification_types)
