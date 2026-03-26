@@ -46,7 +46,7 @@
             </svg>
           <% end %>
           <div class="flex items-center gap-2 sm:gap-4" data-controller="push" data-push-public-key-value="<%= Rails.application.credentials.dig(:webpush, :vapid_public_key) || ENV.fetch("VAPID_PUBLIC_KEY", "") %>" data-push-is-subscribed-value="<%= current_user.push_subscriptions.any? %>">
-            <button type="button" id="push-subscribe-btn" onclick="document.querySelector('[data-controller=push]').dataset.pushController.handleSubscribeClick()" class="text-xs sm:text-sm px-2 sm:px-3 py-1 rounded bg-blue-500 text-white hover:bg-blue-600 whitespace-nowrap cursor-pointer touch-manipulation" data-push-subscribe-target="button">
+            <button type="button" class="text-xs sm:text-sm px-2 sm:px-3 py-1 rounded bg-blue-500 text-white hover:bg-blue-600 whitespace-nowrap cursor-pointer touch-manipulation" data-push-subscribe-target="button" onclick="window.handlePushButtonClick()">
               <%= current_user.push_subscriptions.any? ? "Notifications: ON" : "Enable Notifications" %>
             </button>
             <% latest_saldo = SaldoRecord.latest_for_user(current_user) %>

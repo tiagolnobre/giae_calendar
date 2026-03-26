@@ -30,8 +30,8 @@ export default class extends Controller {
     this.updateButton()
   }
 
-  async initialize() {
-    // Store reference to controller for onclick access
+  initialize() {
+    window.handlePushButtonClick = () => this.handleSubscribeClick()
     this.element.dataset.pushController = this
     
     this.boundCheckVisibility = this.checkVisibility.bind(this)
@@ -39,15 +39,17 @@ export default class extends Controller {
     this.checkVisibility()
   }
 
-  handleSubscribeClick(btn) {
+  handleSubscribeClick() {
+    alert('handleSubscribeClick: ' + this.isSubscribedValue)
     if (this.isSubscribedValue) {
-      this.handleUnsubscribe(btn)
+      this.handleUnsubscribe()
     } else {
-      this.handleSubscribe(btn)
+      this.handleSubscribe()
     }
   }
 
-  async handleSubscribe(btn) {
+  async handleSubscribe() {
+    alert('handleSubscribe called')
     const permission = await Notification.requestPermission()
     if (permission !== "granted") {
       return
