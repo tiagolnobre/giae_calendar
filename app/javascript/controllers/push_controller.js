@@ -7,12 +7,26 @@ export default class extends Controller {
     isSubscribed: Boolean
   }
 
-  async connect() {
+  async initialize() {
+    this.boundCheckVisibility = this.checkVisibility.bind(this)
+    document.addEventListener('turbo:load', this.boundCheckVisibility)
+    this.checkVisibility()
+  }
+
+  disconnect() {
+    document.removeEventListener('turbo:load', this.boundCheckVisibility)
+  }
+
+  checkVisibility() {
     if (!("Notification" in window) || !("serviceWorker" in navigator)) {
-      this.element.classList.add("hidden")
       return
     }
 
+    if (!this.publicKeyValue) {
+      return
+    }
+
+    this.element.classList.remove("hidden")
     this.updateButton()
   }
 
