@@ -7,7 +7,7 @@ class NotifyUpcomingMealTicketsJob < ApplicationJob
     tomorrow = Date.tomorrow
 
     User.find_each do |user|
-      next unless user.in_app_notifications_enabled? || user.email_notifications_enabled?
+      next unless user.in_app_notifications_enabled? || user.email_notifications_enabled? || user.push_subscriptions.any?
 
       has_ticket = user.meal_tickets.exists?(date: tomorrow, bought: true)
 
@@ -27,6 +27,7 @@ class NotifyUpcomingMealTicketsJob < ApplicationJob
     notification_types = []
     notification_types << :in_app if user.in_app_notifications_enabled?
     notification_types << :email if user.email_notifications_enabled?
+    notification_types << :web_push if user.push_subscriptions.any?
 
     NotificationService.new(user).notify(title, body, types: notification_types)
   end

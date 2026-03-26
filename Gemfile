@@ -82,3 +82,5 @@ gem "lucide-rails"
 
 gem "sentry-ruby"
 gem "sentry-rails"
+
+gem "web-push"

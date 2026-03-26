@@ -45,7 +45,10 @@
               <text x="50%" y="55%" text-anchor="middle" dominant-baseline="middle" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-weight="800" font-size="22" letter-spacing="1" fill="#ffffff">GIAE</text>
             </svg>
           <% end %>
-          <div class="flex items-center gap-4">
+          <div class="flex items-center gap-4" data-controller="push" data-push-public-key-value="<%= Rails.application.credentials.dig(:webpush, :vapid_public_key) || ENV.fetch("VAPID_PUBLIC_KEY", "") %>" data-push-is-subscribed-value="<%= current_user.push_subscriptions.any? %>">
+            <button type="button" data-push-subscribe-target="button" class="text-sm px-3 py-1 rounded bg-blue-500 text-white hover:bg-blue-600">
+              <%= current_user.push_subscriptions.any? ? "Notifications: ON" : "Enable Notifications" %>
+            </button>
             <% latest_saldo = SaldoRecord.latest_for_user(current_user) %>
             <% if latest_saldo %>
               <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
@@ -109,7 +112,6 @@
 
     <%= yield %>
 
-    <% if Rails.env.production? %>
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
@@ -123,6 +125,5 @@
         });
       }
     </script>
-    <% end %>
   </body>
 </html>

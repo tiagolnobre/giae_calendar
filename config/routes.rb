@@ -15,6 +15,10 @@ Rails.application.routes.draw do
   get "/notifications", to: "notifications#index", as: :notifications
   patch "/notifications/:id/read", to: "notifications#mark_read", as: :mark_notification_read
 
+  get "/push_subscriptions/public_key", to: "push_subscriptions#public_key", as: :push_subscription_public_key
+  post "/push_subscriptions", to: "push_subscriptions#create"
+  delete "/push_subscriptions", to: "push_subscriptions#destroy"
+
   root to: "sessions#new"
 
   get "/calendar", to: "calendars#show", as: :calendar
