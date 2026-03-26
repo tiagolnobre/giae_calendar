@@ -40,10 +40,13 @@ export default class extends Controller {
   }
 
   handleSubscribeClick() {
-    alert('handleSubscribeClick: ' + this.isSubscribedValue)
-    if (this.isSubscribedValue) {
+    const isSubscribed = this.isSubscribedValue === true || this.isSubscribedValue === "true"
+    alert('handleSubscribeClick: isSubscribed=' + isSubscribed + ', type=' + typeof this.isSubscribedValue + ', value=' + this.isSubscribedValue)
+    if (isSubscribed) {
+      alert('Calling handleUnsubscribe')
       this.handleUnsubscribe()
     } else {
+      alert('Calling handleSubscribe')
       this.handleSubscribe()
     }
   }
@@ -76,22 +79,27 @@ export default class extends Controller {
     }
   }
 
-  async handleUnsubscribe(btn) {
-    const registration = await navigator.serviceWorker.ready
-    const subscription = await registration.pushManager.getSubscription()
-
-    if (subscription) {
-      await subscription.unsubscribe()
-      await fetch(`/push_subscriptions?endpoint=${encodeURIComponent(subscription.endpoint)}`, {
+  async handleUnsubscribe() {
+    alert('handleUnsubscribe start')
+    
+    // Just update local state without waiting for service worker
+    this.isSubscribedValue = false
+    this.updateButton()
+    
+    // Fire and forget the backend call
+    try {
+      const btn = this.element.querySelector('[data-push-subscribe-target="button"]')
+      const endpoint = btn?.dataset?.endpoint || ''
+      
+      fetch(`/push_subscriptions?endpoint=${encodeURIComponent(endpoint)}`, {
         method: "DELETE",
         headers: {
           "X-CSRF-Token": this.getCSRFToken()
         }
-      })
-    }
-
-    this.isSubscribedValue = false
-    this.updateButton()
+      }).catch(() => {}) // Ignore errors
+    } catch(e) {}
+    
+    alert('done - button should be updated')
   }
 
   async subscribe(event) {
