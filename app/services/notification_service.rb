@@ -14,6 +14,8 @@ class NotificationService
         create_in_app_notification(title, body, notifiable) if @user.in_app_notifications_enabled?
       when :email
         send_email_notification(title, body, notifiable) if @user.email_notifications_enabled?
+      when :web_push
+        send_web_push_notification(title, body) if @user.push_subscriptions.any?
       end
     end
   end
@@ -42,5 +44,11 @@ class NotificationService
     )
 
     UserMailer.notification_email(@user, title, body).deliver_later
+  end
+
+  def send_web_push_notification(title, body)
+    @user.push_subscriptions.each do |subscription|
+      subscription.send_push(title: title, body: body)
+    end
   end
 end

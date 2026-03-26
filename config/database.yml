@@ -5,21 +5,19 @@ default: &default
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
   # SQLite3 specific settings
   pragmas:
-    # Improve SQLite performance
     journal_mode: 'wal'
     synchronous: 'normal'
     temp_store: 'memory'
     mmap_size: '30000000000'
-    busy_timeout: 15000
+    busy_timeout: 300000
 
 development:
-  <<: *default
-  database: storage/development.sqlite3
-  # Solid Queue will use main database by default
-  # queue:
-  #   <<: *default
-  #   database: storage/development_queue.sqlite3
-  #   migrations_paths: db/queue_migrate
+  primary:
+    <<: *default
+    database: storage/development.sqlite3
+  queue:
+    <<: *default
+    database: storage/development_queue.sqlite3
 
 test:
   <<: *default

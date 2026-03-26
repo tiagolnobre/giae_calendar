@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_05_173001) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_23_225649) do
   create_table "giae_sessions", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "error_message"
@@ -73,12 +73,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_05_173001) do
     t.index ["user_id"], name: "index_notifications_on_user_id"
   end
 
+  create_table "push_subscriptions", force: :cascade do |t|
+    t.text "auth"
+    t.datetime "created_at", null: false
+    t.text "endpoint"
+    t.text "p256dh"
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["user_id"], name: "index_push_subscriptions_on_user_id"
+  end
+
   create_table "saldo_records", force: :cascade do |t|
     t.integer "cents", null: false
     t.datetime "created_at", precision: nil
     t.datetime "updated_at", precision: nil
     t.integer "user_id", null: false
-    t.index ["user_id"], name: "index_saldo_records_on_user_id"
   end
 
   create_table "solid_queue_blocked_executions", force: :cascade do |t|
@@ -157,7 +166,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_05_173001) do
     t.string "schedule", null: false
     t.boolean "static", default: true, null: false
     t.datetime "updated_at", null: false
-    t.index ["key"], name: "index_solid_queue_recurring_tasks_on_key", unique: true
   end
 
   create_table "solid_queue_scheduled_executions", force: :cascade do |t|
@@ -198,5 +206,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_05_173001) do
   add_foreign_key "meal_details", "users"
   add_foreign_key "meal_tickets", "users"
   add_foreign_key "notifications", "users"
+  add_foreign_key "push_subscriptions", "users"
   add_foreign_key "saldo_records", "users"
 end

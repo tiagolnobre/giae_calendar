@@ -7,6 +7,7 @@ class User < ApplicationRecord
   has_many :meal_details, dependent: :destroy
   has_many :saldo_records, dependent: :destroy
   has_many :notifications, dependent: :destroy
+  has_many :push_subscriptions, dependent: :destroy
 
   validates :email, presence: true, uniqueness: true
 
