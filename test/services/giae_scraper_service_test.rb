@@ -206,6 +206,8 @@ class GiaeScraperServiceTest < ActiveSupport::TestCase
     mock_http = mock("http")
     mock_http.expects(:use_ssl=).with(true)
     mock_http.expects(:verify_mode=).with(OpenSSL::SSL::VERIFY_NONE)
+    mock_http.expects(:open_timeout=).with(45)
+    mock_http.expects(:read_timeout=).with(45)
     mock_http.stubs(:request).returns(mock_response)
 
     Net::HTTP.expects(:new).with("aemgn.giae.pt", 443).returns(mock_http)
@@ -232,6 +234,8 @@ class GiaeScraperServiceTest < ActiveSupport::TestCase
     mock_http = mock("http")
     mock_http.expects(:use_ssl=).with(true)
     mock_http.expects(:verify_mode=).with(OpenSSL::SSL::VERIFY_NONE)
+    mock_http.expects(:open_timeout=).with(45)
+    mock_http.expects(:read_timeout=).with(45)
     mock_http.stubs(:request).returns(mock_response)
 
     Net::HTTP.expects(:new).returns(mock_http)
@@ -257,6 +261,8 @@ class GiaeScraperServiceTest < ActiveSupport::TestCase
     mock_http = mock("http")
     mock_http.expects(:use_ssl=).with(true)
     mock_http.expects(:verify_mode=).with(OpenSSL::SSL::VERIFY_NONE)
+    mock_http.expects(:open_timeout=).with(45)
+    mock_http.expects(:read_timeout=).with(45)
     mock_http.stubs(:request).returns(mock_response)
 
     Net::HTTP.expects(:new).returns(mock_http)
@@ -282,6 +288,8 @@ class GiaeScraperServiceTest < ActiveSupport::TestCase
     mock_http = mock("http")
     mock_http.expects(:use_ssl=).with(true)
     mock_http.expects(:verify_mode=).with(OpenSSL::SSL::VERIFY_NONE)
+    mock_http.expects(:open_timeout=).with(45)
+    mock_http.expects(:read_timeout=).with(45)
     mock_http.stubs(:request).returns(mock_response)
 
     Net::HTTP.expects(:new).returns(mock_http)
@@ -307,6 +315,8 @@ class GiaeScraperServiceTest < ActiveSupport::TestCase
     mock_http = mock("http")
     mock_http.expects(:use_ssl=).with(true)
     mock_http.expects(:verify_mode=).with(OpenSSL::SSL::VERIFY_NONE)
+    mock_http.expects(:open_timeout=).with(45)
+    mock_http.expects(:read_timeout=).with(45)
     mock_http.stubs(:request).returns(mock_response)
 
     Net::HTTP.expects(:new).returns(mock_http)
@@ -339,6 +349,8 @@ class GiaeScraperServiceTest < ActiveSupport::TestCase
     mock_http = mock("http")
     mock_http.expects(:use_ssl=).with(true)
     mock_http.expects(:verify_mode=).with(OpenSSL::SSL::VERIFY_NONE)
+    mock_http.expects(:open_timeout=).with(45)
+    mock_http.expects(:read_timeout=).with(45)
     mock_http.stubs(:request).returns(mock_response)
 
     Net::HTTP.expects(:new).returns(mock_http)
@@ -371,6 +383,8 @@ class GiaeScraperServiceTest < ActiveSupport::TestCase
     mock_http = mock("http")
     mock_http.expects(:use_ssl=).with(true)
     mock_http.expects(:verify_mode=).with(OpenSSL::SSL::VERIFY_NONE)
+    mock_http.expects(:open_timeout=).with(45)
+    mock_http.expects(:read_timeout=).with(45)
     mock_http.stubs(:request).returns(mock_response)
 
     Net::HTTP.expects(:new).returns(mock_http)
@@ -407,6 +421,8 @@ class GiaeScraperServiceTest < ActiveSupport::TestCase
     mock_http = mock("http")
     mock_http.expects(:use_ssl=).with(true)
     mock_http.expects(:verify_mode=).with(OpenSSL::SSL::VERIFY_NONE)
+    mock_http.expects(:open_timeout=).with(45)
+    mock_http.expects(:read_timeout=).with(45)
     mock_http.stubs(:request).returns(mock_response)
 
     Net::HTTP.expects(:new).returns(mock_http)
@@ -434,6 +450,8 @@ class GiaeScraperServiceTest < ActiveSupport::TestCase
     mock_http = mock("http")
     mock_http.expects(:use_ssl=).with(true)
     mock_http.expects(:verify_mode=).with(OpenSSL::SSL::VERIFY_NONE)
+    mock_http.expects(:open_timeout=).with(45)
+    mock_http.expects(:read_timeout=).with(45)
     mock_http.stubs(:request).returns(mock_response)
 
     Net::HTTP.expects(:new).returns(mock_http)
@@ -459,6 +477,8 @@ class GiaeScraperServiceTest < ActiveSupport::TestCase
     mock_http = mock("http")
     mock_http.expects(:use_ssl=).with(true)
     mock_http.expects(:verify_mode=).with(OpenSSL::SSL::VERIFY_NONE)
+    mock_http.expects(:open_timeout=).with(45)
+    mock_http.expects(:read_timeout=).with(45)
     mock_http.stubs(:request).returns(mock_response)
 
     Net::HTTP.expects(:new).returns(mock_http)
@@ -488,6 +508,8 @@ class GiaeScraperServiceTest < ActiveSupport::TestCase
     mock_http = mock("http")
     mock_http.expects(:use_ssl=).with(true).times(2)
     mock_http.expects(:verify_mode=).with(OpenSSL::SSL::VERIFY_NONE).times(2)
+    mock_http.expects(:open_timeout=).with(45).times(2)
+    mock_http.expects(:read_timeout=).with(45).times(2)
     mock_http.stubs(:request).returns(login_response).then.returns(data_response)
 
     Net::HTTP.expects(:new).returns(mock_http).times(2)

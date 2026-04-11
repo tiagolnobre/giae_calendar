@@ -7,13 +7,82 @@ export default class extends Controller {
     isSubscribed: Boolean
   }
 
-  async connect() {
+  connect() {
+    // Force run on next frame to ensure DOM is ready
+    requestAnimationFrame(() => {
+      this.runSetup()
+    })
+  }
+
+  runSetup() {
+    // Make handler globally available
+    window.pushControllerSubscribe = () => {
+      if (this.isSubscribedValue === true || this.isSubscribedValue === "true") {
+        this.handleUnsubscribe()
+      } else {
+        this.handleSubscribe()
+      }
+    }
+    
+    this.checkVisibility()
+  }
+
+  checkVisibility() {
     if (!("Notification" in window) || !("serviceWorker" in navigator)) {
-      this.element.classList.add("hidden")
+      return
+    }
+    if (!this.publicKeyValue) {
+      return
+    }
+    this.element.classList.remove("hidden")
+  }
+
+  async handleSubscribe() {
+    const permission = await Notification.requestPermission()
+    if (permission !== "granted") {
       return
     }
 
+    const registration = await navigator.serviceWorker.ready
+    const subscription = await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: this.urlBase64ToUint8Array(this.publicKeyValue)
+    })
+
+    const response = await fetch("/push_subscriptions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-Token": this.getCSRFToken()
+      },
+      body: JSON.stringify({ subscription: subscription.toJSON() })
+    })
+
+    if (response.ok) {
+      this.isSubscribedValue = true
+      this.updateButton()
+    }
+  }
+      this.updateButton()
+    }
+  }
+
+  async handleUnsubscribe() {
+    // Update local state first
+    this.isSubscribedValue = false
     this.updateButton()
+    
+    // Fire and forget the backend call
+    fetch('/push_subscriptions?endpoint=', {
+      method: "DELETE",
+      headers: {
+        "X-CSRF-Token": this.getCSRFToken()
+      }
+    }).then(() => {
+      alert('Unsubscribed!')
+    }).catch(() => {
+      alert('Unsubscribed (local)!')
+    })
   }
 
   async subscribe(event) {

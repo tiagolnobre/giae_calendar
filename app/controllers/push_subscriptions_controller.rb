@@ -24,9 +24,12 @@ class PushSubscriptionsController < ApplicationController
   end
 
   def destroy
-    endpoint = params.require(:endpoint)
-
-    current_user.push_subscriptions.find_by(endpoint: endpoint)&.destroy
+    endpoint = params[:endpoint].presence
+    if endpoint.present?
+      current_user.push_subscriptions.find_by(endpoint: endpoint)&.destroy
+    else
+      current_user.push_subscriptions.destroy_all
+    end
     head :ok
   end
 end
