@@ -161,6 +161,8 @@ class GiaeScraperService
     # or set to OpenSSL::SSL::VERIFY_PEER
     # Brakeman: ignore SSL verification bypass - intentional for GIAE compatibility
     http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+    http.open_timeout = 45
+    http.read_timeout = 45
 
     request = Net::HTTP::Post.new(uri.path)
     request["Content-Type"] = "application/json"

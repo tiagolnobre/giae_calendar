@@ -27,6 +27,17 @@ class ApplicationScraperJob < ApplicationJob
     attempts: 5,
     jitter: 0
 
+  # Retry on network timeouts (external GIAE service unavailable)
+  retry_on Net::OpenTimeout,
+    wait: 45.seconds,
+    attempts: 3,
+    jitter: 0
+
+  retry_on Net::ReadTimeout,
+    wait: 45.seconds,
+    attempts: 3,
+    jitter: 0
+
   protected
 
   def with_session(user)
