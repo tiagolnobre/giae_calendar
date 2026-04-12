@@ -38,6 +38,12 @@ class ApplicationScraperJob < ApplicationJob
     attempts: 3,
     jitter: 0
 
+  # Retry on SQLite lock errors (database busy)
+  retry_on ActiveRecord::StatementTimeout,
+    wait: 30.seconds,
+    attempts: 3,
+    jitter: 0
+
   protected
 
   def with_session(user)

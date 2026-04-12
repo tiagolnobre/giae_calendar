@@ -9,7 +9,7 @@ default: &default
     synchronous: 'normal'
     temp_store: 'memory'
     mmap_size: '30000000000'
-    busy_timeout: 300000
+    busy_timeout: 5000
 
 development:
   primary:
