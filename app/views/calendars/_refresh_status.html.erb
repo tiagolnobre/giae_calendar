@@ -8,8 +8,8 @@
       <span><%= defined?(message) ? message : t("calendar.refreshing") %></span>
     </div>
   <% elsif user.last_refreshed_at %>
-    <p>Última atualização: <%= l(user.last_refreshed_at, format: :long) %></p>
+    <p title="<%= l(user.last_refreshed_at, format: :long) %>"><%= t("calendar.last_updated", time: time_ago_in_words(user.last_refreshed_at)) %></p>
   <% else %>
-    <p class="text-gray-400">Nunca atualizado</p>
+    <p class="text-gray-400"><%= t("calendar.never_updated") %></p>
   <% end %>
 </div>

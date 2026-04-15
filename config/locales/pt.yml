@@ -80,6 +80,8 @@ pt:
     dinner: "Jantar"
     refresh: "Atualizar"
     refreshing: "A atualizar..."
+    last_updated: "Atualizado há %{time}"
+    never_updated: "Nunca atualizado"
     soup: "Sopa"
     main_dish: "Prato"
     vegetables: "Legumes"
@@ -90,6 +92,9 @@ pt:
     edit_credentials: "Editar credenciais"
     no_menu_info: "Sem informação do menu para este dia"
     status: "Estado"
+    history: "Histórico"
+    back: "Voltar"
+    no_history: "Sem histórico de refeições"
   notifications:
     title: "Notificações"
     no_notifications: "Sem notificações"

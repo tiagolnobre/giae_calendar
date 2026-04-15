@@ -1,0 +1,38 @@
+<div class="min-h-screen bg-gray-50">
+  <div class="max-w-md mx-auto px-4 py-6">
+    <div class="flex items-center justify-between mb-6">
+      <h1 class="text-2xl font-bold text-gray-900"><%= t("calendar.history") %></h1>
+      <%= link_to calendar_path, class: "text-blue-600 hover:text-blue-800" do %>
+        <%= t("calendar.back") %>
+      <% end %>
+    </div>
+
+    <% if @months.present? && @months.any? { |m| m[:total_days] > 0 } %>
+      <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+        <% @months.each do |month| %>
+          <% next if month[:total_days].zero? %>
+          <div class="p-4 border-b border-gray-100">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="font-semibold text-gray-800"><%= month[:month_name] %> <%= month[:year] %></h3>
+                <p class="text-sm text-gray-500">
+                  <%= month[:bought_count] %> / <%= month[:total_days] %> <%= t("calendar.meals") %>
+                </p>
+              </div>
+              <div class="flex items-center gap-2">
+                <div class="w-16 bg-gray-200 rounded-full h-2">
+                  <div class="h-2 rounded-full" style="width: <%= (month[:bought_count].to_f / month[:total_days] * 100).round %>%; background-color: #5DD3B6;"></div>
+                </div>
+                <span class="text-sm text-gray-600"><%= (month[:bought_count].to_f / month[:total_days] * 100).round %>%</span>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="text-center py-8">
+        <p class="text-gray-500"><%= t("calendar.no_history") %></p>
+      </div>
+    <% end %>
+  </div>
+</div>

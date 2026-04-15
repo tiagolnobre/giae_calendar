@@ -8,14 +8,12 @@ export default class extends Controller {
   }
 
   connect() {
-    // Force run on next frame to ensure DOM is ready
     requestAnimationFrame(() => {
       this.runSetup()
     })
   }
 
   runSetup() {
-    // Make handler globally available
     window.pushControllerSubscribe = () => {
       if (this.isSubscribedValue === true || this.isSubscribedValue === "true") {
         this.handleUnsubscribe()
@@ -63,60 +61,27 @@ export default class extends Controller {
       this.updateButton()
     }
   }
-      this.updateButton()
-    }
-  }
 
   async handleUnsubscribe() {
-    // Update local state first
     this.isSubscribedValue = false
     this.updateButton()
     
-    // Fire and forget the backend call
     fetch('/push_subscriptions?endpoint=', {
       method: "DELETE",
       headers: {
         "X-CSRF-Token": this.getCSRFToken()
       }
-    }).then(() => {
-      alert('Unsubscribed!')
-    }).catch(() => {
-      alert('Unsubscribed (local)!')
-    })
+    }).catch(() => {})
   }
 
   async subscribe(event) {
-    event.preventDefault()
-
-    const permission = await Notification.requestPermission()
-    if (permission !== "granted") {
-      return
-    }
-
-    const registration = await navigator.serviceWorker.ready
-    const subscription = await registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: this.urlBase64ToUint8Array(this.publicKeyValue)
-    })
-
-    const response = await fetch("/push_subscriptions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRF-Token": this.getCSRFToken()
-      },
-      body: JSON.stringify({ subscription: subscription.toJSON() })
-    })
-
-    if (response.ok) {
-      this.isSubscribedValue = true
-      this.updateButton()
-    }
+    event?.preventDefault()
+    await this.handleSubscribe()
   }
 
   async unsubscribe(event) {
-    event.preventDefault()
-
+    event?.preventDefault()
+    
     const registration = await navigator.serviceWorker.ready
     const subscription = await registration.pushManager.getSubscription()
 
@@ -136,20 +101,18 @@ export default class extends Controller {
 
   updateButton() {
     const subscribeBtn = this.element.querySelector("[data-push-subscribe-target='button']")
-    if (subscribeBtn) {
-      if (this.isSubscribedValue) {
-        subscribeBtn.textContent = "Notifications: ON"
-        subscribeBtn.classList.remove("bg-blue-500", "hover:bg-blue-600")
-        subscribeBtn.classList.add("bg-green-500", "hover:bg-green-600")
-        subscribeBtn.removeEventListener("click", this.subscribe.bind(this))
-        subscribeBtn.addEventListener("click", this.unsubscribe.bind(this))
-      } else {
-        subscribeBtn.textContent = "Enable Notifications"
-        subscribeBtn.classList.remove("bg-green-500", "hover:bg-green-600")
-        subscribeBtn.classList.add("bg-blue-500", "hover:bg-blue-600")
-        subscribeBtn.removeEventListener("click", this.unsubscribe.bind(this))
-        subscribeBtn.addEventListener("click", this.subscribe.bind(this))
-      }
+    if (!subscribeBtn) return
+
+    if (this.isSubscribedValue) {
+      subscribeBtn.textContent = "Notifications: ON"
+      subscribeBtn.classList.remove("bg-blue-500", "hover:bg-blue-600")
+      subscribeBtn.classList.add("bg-green-500", "hover:bg-green-600")
+      subscribeBtn.onclick = (e) => this.unsubscribe(e)
+    } else {
+      subscribeBtn.textContent = "Enable Notifications"
+      subscribeBtn.classList.remove("bg-green-500", "hover:bg-green-600")
+      subscribeBtn.classList.add("bg-blue-500", "hover:bg-blue-600")
+      subscribeBtn.onclick = (e) => this.subscribe(e)
     }
   }
 
