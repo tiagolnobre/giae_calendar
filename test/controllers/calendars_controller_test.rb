@@ -10,9 +10,7 @@ class CalendarsControllerTest < ActionDispatch::IntegrationTest
   test "should get show" do
     get calendar_path
     assert_response :success
-    puts "DEBUG content_type: #{response.media_type}"
-    puts "DEBUG body length: #{response.body.length}"
-    puts "DEBUG body[3500..]: #{response.body[3500..]}"
+
     assert_select "h1"
   end
 
