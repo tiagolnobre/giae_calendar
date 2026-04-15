@@ -65,6 +65,12 @@ class RefreshMealTicketsJob < ApplicationScraperJob
 
       user.update!(last_refreshed_at: Time.current)
 
+      NotificationService.new(user).notify(
+        "Refresh Complete",
+        "Your meal tickets have been updated",
+        types: [ :web_push ]
+      )
+
       Rails.logger.info "[RefreshMealTicketsJob] Completed refresh for user #{user.id}, #{results.length} tickets processed"
 
       results

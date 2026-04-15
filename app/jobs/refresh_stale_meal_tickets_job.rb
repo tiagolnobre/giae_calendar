@@ -16,7 +16,5 @@ class RefreshStaleMealTicketsJob < ApplicationJob
     users.find_each do |user|
       RefreshMealTicketsJob.perform_later(user.id)
     end
-
-    NotifyUpcomingMealTicketsJob.perform_later(wait: 10.minutes)
   end
 end

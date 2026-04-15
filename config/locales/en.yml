@@ -43,6 +43,8 @@ en:
     dinner: "Dinner"
     refresh: "Refresh"
     refreshing: "Refreshing..."
+    last_updated: "Updated %{time} ago"
+    never_updated: "Never updated"
     soup: "Soup"
     main_dish: "Main dish"
     vegetables: "Vegetables"
@@ -53,6 +55,9 @@ en:
     edit_credentials: "Edit credentials"
     no_menu_info: "No menu information for this day"
     status: "Status"
+    history: "History"
+    back: "Back"
+    no_history: "No meal history yet"
   notifications:
     title: "Notifications"
     no_notifications: "No notifications"

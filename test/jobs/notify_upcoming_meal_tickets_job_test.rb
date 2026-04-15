@@ -121,4 +121,24 @@ class NotifyUpcomingMealTicketsJobTest < ActiveJob::TestCase
 
     assert enqueued_jobs.count > initial_jobs_count
   end
+
+  test "should continue processing other users when one fails" do
+    user_one = users(:one)
+    user_two = users(:two)
+
+    user_one.update!(in_app_notifications_enabled: true, email_notifications_enabled: false)
+    user_two.update!(in_app_notifications_enabled: true, email_notifications_enabled: false)
+
+    # Make user_one's meal_tickets query raise to simulate a failure,
+    # then user_two should still get notified
+    MealTicket.stubs(:exists?).raises(ActiveRecord::ConnectionTimeoutError.new("timeout")).then.returns(false)
+
+    initial_count_two = Notification.where(user: user_two).count
+
+    NotifyUpcomingMealTicketsJob.perform_now
+
+    final_count_two = Notification.where(user: user_two).count
+    assert final_count_two > initial_count_two,
+      "user_two should still receive a notification even when user_one fails"
+  end
 end

@@ -10,9 +10,7 @@ class CalendarsControllerTest < ActionDispatch::IntegrationTest
   test "should get show" do
     get calendar_path
     assert_response :success
-    puts "DEBUG content_type: #{response.media_type}"
-    puts "DEBUG body length: #{response.body.length}"
-    puts "DEBUG body[3500..]: #{response.body[3500..]}"
+
     assert_select "h1"
   end
 
@@ -106,7 +104,7 @@ class CalendarsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     # Check that refresh status div exists and shows last update time
     assert_select "#refresh-status"
-    assert_match(/Última atualização/, response.body)
+    assert_match(/Updated/, response.body)
   end
 
   test "should show refresh status for fresh data" do
@@ -115,7 +113,7 @@ class CalendarsControllerTest < ActionDispatch::IntegrationTest
     get calendar_path
     assert_response :success
     assert_select "#refresh-status"
-    assert_match(/Última atualização/, response.body)
+    assert_match(/Updated/, response.body)
   end
 
   test "should handle missing last_refreshed_at" do
@@ -123,8 +121,7 @@ class CalendarsControllerTest < ActionDispatch::IntegrationTest
 
     get calendar_path
     assert_response :success
-    # Should show "never updated" message
-    assert_match(/Nunca atualizado/, response.body)
+    assert_match(/Never updated/, response.body)
   end
 
   test "should display calendar grid" do

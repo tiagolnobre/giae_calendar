@@ -93,4 +93,29 @@ class CalendarsController < ApplicationController
   def portuguese_holiday?(date)
     Holidays.on(date, :pt).any?
   end
+
+  def history
+    @user = current_user
+    @months = []
+
+    start_date = Date.today.beginning_of_month
+    end_date = start_date - 12.months
+
+    current = end_date
+    while current <= start_date
+      tickets = @user.meal_tickets.where("date >= ? AND date < ?", current.beginning_of_month, current.end_of_month + 1.day)
+      bought_count = tickets.where(bought: true).count
+      total_days = tickets.count
+
+      @months << {
+        month: current.month,
+        year: current.year,
+        month_name: I18n.t("date.month_names")[current.month],
+        bought_count: bought_count,
+        total_days: total_days
+      }
+
+      current += 1.month
+    end
+  end
 end

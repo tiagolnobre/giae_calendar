@@ -32,19 +32,21 @@ class RefreshStaleMealTicketsJobTest < ActiveJob::TestCase
     enqueued_jobs.clear
     RefreshStaleMealTicketsJob.perform_now
 
-    # Should only have NotifyUpcomingMealTicketsJob, not RefreshMealTicketsJob
+    # No RefreshMealTicketsJob should be enqueued
     refresh_jobs = enqueued_jobs.select { |j| j[:job] == RefreshMealTicketsJob }
     assert_equal 0, refresh_jobs.count
   end
 
-  test "should queue notification job" do
+  test "should not enqueue NotifyUpcomingMealTicketsJob" do
     User.update_all(last_refreshed_at: Time.current)
     user = users(:one)
     user.update!(last_refreshed_at: 5.hours.ago)
 
-    assert_enqueued_with(job: NotifyUpcomingMealTicketsJob) do
-      RefreshStaleMealTicketsJob.perform_now
-    end
+    enqueued_jobs.clear
+    RefreshStaleMealTicketsJob.perform_now
+
+    notify_jobs = enqueued_jobs.select { |j| j[:job] == NotifyUpcomingMealTicketsJob }
+    assert_equal 0, notify_jobs.count
   end
 
   test "should handle multiple stale users" do
@@ -54,7 +56,7 @@ class RefreshStaleMealTicketsJobTest < ActiveJob::TestCase
 
     RefreshStaleMealTicketsJob.perform_now
 
-    # Should have 2 RefreshMealTicketsJob + 1 NotifyUpcomingMealTicketsJob
+    # Should have 2 RefreshMealTicketsJob only
     refresh_jobs = enqueued_jobs.select { |j| j[:job] == RefreshMealTicketsJob }
     assert_equal 2, refresh_jobs.count
   end
