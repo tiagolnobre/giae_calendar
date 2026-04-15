@@ -1,4 +1,9 @@
 pt:
+  activerecord:
+    errors:
+      messages:
+        blank: "não pode ficar em branco"
+        taken: "já foi tomado"
   time:
     formats:
       long: "%d de %B de %Y, às %H:%M"
