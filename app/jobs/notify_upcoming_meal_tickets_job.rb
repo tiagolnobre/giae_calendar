@@ -9,11 +9,15 @@ class NotifyUpcomingMealTicketsJob < ApplicationJob
     User.find_each do |user|
       next unless user.in_app_notifications_enabled? || user.email_notifications_enabled? || user.push_subscriptions.any?
 
-      has_ticket = user.meal_tickets.exists?(date: tomorrow, bought: true)
+      begin
+        has_ticket = user.meal_tickets.exists?(date: tomorrow, bought: true)
 
-      unless has_ticket
-        Rails.logger.info "[NotifyUpcomingMealTicketsJob] User #{user.id} has no ticket for tomorrow"
-        notify_user(user, tomorrow)
+        unless has_ticket
+          Rails.logger.info "[NotifyUpcomingMealTicketsJob] User #{user.id} has no ticket for tomorrow"
+          notify_user(user, tomorrow)
+        end
+      rescue => e
+        Rails.logger.error "[NotifyUpcomingMealTicketsJob] Failed for user #{user.id}: #{e.class} - #{e.message}"
       end
     end
   end
