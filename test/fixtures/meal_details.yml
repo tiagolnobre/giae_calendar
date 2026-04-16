@@ -1,0 +1,19 @@
+one:
+  user: one
+  date: 2026-03-02
+  period: "Almoço"
+  soup: "Sopa de legumes"
+  main_dish: "Arroz de pato"
+  vegetables: "Salada mista"
+  dessert: "Pudim"
+  bread: "Pão"
+
+two:
+  user: two
+  date: 2026-03-02
+  period: "Almoço"
+  soup: "Caldo verde"
+  main_dish: "Bacalhau à Brás"
+  vegetables: "Legumes salteados"
+  dessert: "Mousse"
+  bread: "Pão"
