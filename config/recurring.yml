@@ -12,12 +12,12 @@
 refresh_stale_meal_tickets:
   class: RefreshStaleMealTicketsJob
   queue: default
-  schedule: "0 19 * * 0-4"
+  schedule: "0 18 * * 0-4"
 
 notify_upcoming_meal_tickets:
   class: NotifyUpcomingMealTicketsJob
   queue: default
-  schedule: "0 21 * * 0-4"
+  schedule: "0 20 * * 0-4"
 
 # production:
 #   clear_solid_queue_finished_jobs:
