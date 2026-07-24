@@ -88,6 +88,10 @@ en:
     rfc: "End of Cycle Result"
     positive: "Positive"
     no_data: "No evaluation data available."
+    school_year: "School Year"
+    refresh: "Refresh"
+    refreshing: "Refreshing evaluations..."
+    fetch_now: "Fetch Evaluations"
   days:
     mon: "Mon"
     tue: "Tue"

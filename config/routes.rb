@@ -27,4 +27,5 @@ Rails.application.routes.draw do
   get "/calendar/day_details", to: "calendars#day_details", as: :day_details
 
   get "/avaliacoes", to: "avaliacoes#index", as: :avaliacoes
+  post "/avaliacoes/refresh", to: "avaliacoes#refresh", as: :refresh_avaliacoes
 end

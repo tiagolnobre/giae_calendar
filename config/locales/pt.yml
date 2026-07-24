@@ -130,6 +130,10 @@ pt:
     rfc: "Resultado Final de Ciclo"
     positive: "Positivo"
     no_data: "Sem dados de avaliações disponíveis."
+    school_year: "Ano Letivo"
+    refresh: "Atualizar"
+    refreshing: "A atualizar avaliações..."
+    fetch_now: "Obter Avaliações"
   days:
     mon: "Seg"
     tue: "Ter"

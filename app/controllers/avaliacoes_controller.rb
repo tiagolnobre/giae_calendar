@@ -3,16 +3,19 @@ class AvaliacoesController < ApplicationController
 
   def index
     @user = current_user
-    @avaliacoes_data = nil
+    @school_year = @user.school_years.order(created_at: :desc).first
     @error = nil
 
-    begin
-      GiaeSessionManager.new(@user).with_active_session do |scraper|
-        @avaliacoes_data = scraper.fetch_avaliacoes
-      end
-    rescue GiaeSessionManager::SessionUnavailable, GiaeScraperService::Error => e
-      @error = e.message
-      Rails.logger.error "[AvaliacoesController] Error fetching data for user #{@user.id}: #{e.message}"
+    if @school_year.nil?
+      @avaliacoes_data = nil
     end
+  end
+
+  def refresh
+    @user = current_user
+
+    FetchAvaliacoesJob.perform_later(@user.id)
+
+    redirect_to avaliacoes_path, notice: t("avaliacoes.refreshing")
   end
 end

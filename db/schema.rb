@@ -10,7 +10,58 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_12_220000) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_24_154000) do
+  create_table "evaluation_types", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "descricao"
+    t.integer "idtipoavaliacao", null: false
+    t.integer "school_year_id", null: false
+    t.string "sigla"
+    t.date "start_date"
+    t.datetime "updated_at", null: false
+    t.index ["school_year_id", "idtipoavaliacao"], name: "index_evaluation_types_on_school_year_id_and_idtipoavaliacao", unique: true
+    t.index ["school_year_id"], name: "index_evaluation_types_on_school_year_id"
+  end
+
+  create_table "evaluations", force: :cascade do |t|
+    t.string "alinea"
+    t.string "alineadescricao"
+    t.boolean "ativo"
+    t.string "avaliacao"
+    t.string "avaliacaodescricao"
+    t.datetime "created_at", null: false
+    t.date "data"
+    t.date "dataresultadofinal"
+    t.string "disciplina"
+    t.integer "evaluation_type_id", null: false
+    t.boolean "final", default: false, null: false
+    t.integer "idavaliacao"
+    t.integer "idmrf"
+    t.boolean "positiva"
+    t.integer "school_year_id", null: false
+    t.string "sintesedescritiva"
+    t.string "situacao"
+    t.integer "subject_id", null: false
+    t.string "tipoavaliacao"
+    t.datetime "updated_at", null: false
+    t.index ["evaluation_type_id"], name: "index_evaluations_on_evaluation_type_id"
+    t.index ["school_year_id", "subject_id", "evaluation_type_id", "final"], name: "idx_evaluations_on_year_subject_type_final", unique: true
+    t.index ["school_year_id"], name: "index_evaluations_on_school_year_id"
+    t.index ["subject_id"], name: "index_evaluations_on_subject_id"
+  end
+
+  create_table "final_evaluations", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "descricaorfa"
+    t.string "descricaorfc"
+    t.integer "idmatricula"
+    t.boolean "positivorfa"
+    t.boolean "positivorfc"
+    t.integer "school_year_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["school_year_id"], name: "idx_final_evaluations_on_school_year", unique: true
+  end
+
   create_table "giae_sessions", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "error_message"
@@ -89,6 +140,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_12_220000) do
     t.datetime "updated_at", precision: nil
     t.integer "user_id", null: false
     t.index ["user_id", "created_at"], name: "index_saldo_records_on_user_id_and_created_at"
+  end
+
+  create_table "school_years", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "label", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["user_id", "label"], name: "index_school_years_on_user_id_and_label", unique: true
+    t.index ["user_id"], name: "index_school_years_on_user_id"
   end
 
   create_table "solid_queue_blocked_executions", force: :cascade do |t|
@@ -186,6 +246,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_12_220000) do
     t.integer "value", default: 1, null: false
   end
 
+  create_table "subjects", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "descricao"
+    t.integer "iddisciplina"
+    t.integer "idmatriculadisciplina", null: false
+    t.integer "ordem"
+    t.integer "school_year_id", null: false
+    t.string "sigla"
+    t.datetime "updated_at", null: false
+    t.index ["school_year_id", "idmatriculadisciplina"], name: "index_subjects_on_school_year_id_and_idmatriculadisciplina", unique: true
+    t.index ["school_year_id"], name: "index_subjects_on_school_year_id"
+  end
+
   create_table "users", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "email", default: "", null: false
@@ -204,10 +277,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_12_220000) do
     t.index ["email"], name: "index_users_on_email", unique: true
   end
 
+  add_foreign_key "evaluation_types", "school_years"
+  add_foreign_key "evaluations", "evaluation_types"
+  add_foreign_key "evaluations", "school_years"
+  add_foreign_key "evaluations", "subjects"
+  add_foreign_key "final_evaluations", "school_years"
   add_foreign_key "giae_sessions", "users"
   add_foreign_key "meal_details", "users"
   add_foreign_key "meal_tickets", "users"
   add_foreign_key "notifications", "users"
   add_foreign_key "push_subscriptions", "users"
   add_foreign_key "saldo_records", "users"
+  add_foreign_key "school_years", "users"
+  add_foreign_key "subjects", "school_years"
 end
