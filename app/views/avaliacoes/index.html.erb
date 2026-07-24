@@ -1,5 +1,5 @@
 <div class="min-h-screen bg-gray-50">
-  <div class="max-w-md mx-auto px-4 py-6">
+  <div class="max-w-2xl mx-auto px-4 py-6">
     <div class="flex items-center justify-between mb-6">
       <h1 class="text-2xl font-bold text-gray-900"><%= t("avaliacoes.title") %></h1>
       <%= link_to calendar_path, class: "text-blue-600 hover:text-blue-800 text-sm" do %>
@@ -18,7 +18,7 @@
       <% disciplinas = @avaliacoes_data[:disciplinas] %>
       <% avaliacoes = @avaliacoes_data[:avaliacoes] %>
 
-      <div class="bg-white rounded-xl shadow-sm overflow-hidden overflow-x-auto">
+      <div class="bg-white rounded-xl shadow-sm overflow-hidden">
         <table class="w-full text-sm">
           <thead>
             <tr class="bg-gray-50 border-b border-gray-200">
