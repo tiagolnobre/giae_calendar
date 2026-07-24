@@ -10,7 +10,9 @@ if [ ! -f /data/production_queue.sqlite3 ]; then
   echo "Queue database created successfully"
 fi
 
-# Skip migrations - database already exists with schema
-echo "Database already initialized, skipping migrations"
+# Run pending migrations
+echo "Running database migrations..."
+./bin/rails db:migrate
+echo "Migrations completed"
 
 echo "Release completed successfully!"

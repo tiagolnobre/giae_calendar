@@ -613,6 +613,119 @@ class GiaeScraperServiceTest < ActiveSupport::TestCase
     assert_not scraper.send(:portuguese_holiday?, regular_day)
   end
 
+  test "fetch_avaliacoes parses API response correctly" do
+    scraper = GiaeScraperService.new(
+      username: @username,
+      password: @password,
+      login_url: @login_url,
+      school_code: @school_code,
+      session_cookie: "test_session"
+    )
+
+    mock_response = mock("response")
+    mock_response.stubs(:code).returns("200")
+    mock_response.stubs(:body).returns({
+      tiposavaliacoes: [
+        { idtipoavaliacao: 1, descricao: "1P", sigla: "1P", datainicio: "2025-09-11" }
+      ].to_json,
+      disciplinas: [
+        { idmatriculadisciplina: 1, sigla: "PORT", descricao: "Português", ordem: 1 }
+      ].to_json,
+      avaliacoesnc: [
+        { idmatriculadisciplina: 1, idtipoavaliacao: 1, idavaliacao: 1, avaliacao: "MB" }
+      ].to_json,
+      avaliacaofinal: [
+        { descricaorfa: "Approved" }
+      ].to_json
+    }.to_json)
+
+    mock_http = mock("http")
+    mock_http.expects(:use_ssl=).with(true)
+    mock_http.expects(:verify_mode=).with(OpenSSL::SSL::VERIFY_NONE)
+    mock_http.expects(:open_timeout=).with(45)
+    mock_http.expects(:read_timeout=).with(45)
+    mock_http.stubs(:request).returns(mock_response)
+
+    Net::HTTP.expects(:new).returns(mock_http)
+
+    result = scraper.fetch_avaliacoes
+
+    assert_equal 1, result[:tiposavaliacoes].length
+    assert_equal 1, result[:disciplinas].length
+    assert_equal 1, result[:avaliacoes].length
+    assert_equal 1, result[:avaliacaofinal].length
+    assert_equal "1P", result[:tiposavaliacoes].first["sigla"]
+    assert_equal "PORT", result[:disciplinas].first["sigla"]
+    assert_equal "MB", result[:avaliacoes].first["avaliacao"]
+    assert_equal "Approved", result[:avaliacaofinal].first["descricaorfa"]
+  end
+
+  test "fetch_avaliacoes handles null fields" do
+    scraper = GiaeScraperService.new(
+      username: @username,
+      password: @password,
+      login_url: @login_url,
+      school_code: @school_code,
+      session_cookie: "test_session"
+    )
+
+    mock_response = mock("response")
+    mock_response.stubs(:code).returns("200")
+    mock_response.stubs(:body).returns({
+      tiposavaliacoes: nil,
+      disciplinas: nil,
+      avaliacoesnc: nil,
+      avaliacaofinal: nil
+    }.to_json)
+
+    mock_http = mock("http")
+    mock_http.expects(:use_ssl=).with(true)
+    mock_http.expects(:verify_mode=).with(OpenSSL::SSL::VERIFY_NONE)
+    mock_http.expects(:open_timeout=).with(45)
+    mock_http.expects(:read_timeout=).with(45)
+    mock_http.stubs(:request).returns(mock_response)
+
+    Net::HTTP.expects(:new).returns(mock_http)
+
+    result = scraper.fetch_avaliacoes
+    assert_equal [], result[:tiposavaliacoes]
+    assert_equal [], result[:disciplinas]
+    assert_equal [], result[:avaliacoes]
+    assert_equal [], result[:avaliacaofinal]
+  end
+
+  test "fetch_avaliacoes handles array fields directly" do
+    scraper = GiaeScraperService.new(
+      username: @username,
+      password: @password,
+      login_url: @login_url,
+      school_code: @school_code,
+      session_cookie: "test_session"
+    )
+
+    mock_response = mock("response")
+    mock_response.stubs(:code).returns("200")
+    mock_response.stubs(:body).returns({
+      tiposavaliacoes: [ { idtipoavaliacao: 1, sigla: "1P" } ],
+      disciplinas: [ { idmatriculadisciplina: 1, sigla: "PORT" } ],
+      avaliacoesnc: [],
+      avaliacaofinal: []
+    }.to_json)
+
+    mock_http = mock("http")
+    mock_http.expects(:use_ssl=).with(true)
+    mock_http.expects(:verify_mode=).with(OpenSSL::SSL::VERIFY_NONE)
+    mock_http.expects(:open_timeout=).with(45)
+    mock_http.expects(:read_timeout=).with(45)
+    mock_http.stubs(:request).returns(mock_response)
+
+    Net::HTTP.expects(:new).returns(mock_http)
+
+    result = scraper.fetch_avaliacoes
+    assert_equal 1, result[:tiposavaliacoes].length
+    assert_equal "1P", result[:tiposavaliacoes].first["sigla"]
+  end
+
   test "Error is a StandardError" do
     assert GiaeScraperService::Error < StandardError
   end
