@@ -24,7 +24,7 @@
             <tr class="bg-gray-50 border-b border-gray-200">
               <th class="text-left px-3 py-2 font-semibold text-gray-700 whitespace-nowrap"><%= t("avaliacoes.subject") %></th>
               <% tipos.each do |tipo| %>
-                <th class="text-center px-2 py-2 font-semibold text-gray-700 whitespace-nowrap"><%= tipo["sigla"] %></th>
+                <th class="text-center px-2 py-2 font-semibold text-gray-700 whitespace-nowrap" title="<%= tipo["descricao"] %>"><%= tipo["sigla"] %></th>
               <% end %>
             </tr>
           </thead>
