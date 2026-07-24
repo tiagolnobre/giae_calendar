@@ -12,7 +12,7 @@ fi
 
 # Run pending migrations
 echo "Running database migrations..."
-./bin/rails db:migrate
+./bin/rails db:migrate:primary
 echo "Migrations completed"
 
 echo "Release completed successfully!"
