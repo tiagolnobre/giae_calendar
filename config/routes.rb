@@ -25,4 +25,6 @@ Rails.application.routes.draw do
   get "/calendar/history", to: "calendars#history", as: :calendar_history
   post "/calendar/refresh", to: "calendars#refresh", as: :refresh_calendar
   get "/calendar/day_details", to: "calendars#day_details", as: :day_details
+
+  get "/avaliacoes", to: "avaliacoes#index", as: :avaliacoes
 end

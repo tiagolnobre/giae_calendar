@@ -167,6 +167,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_12_220000) do
     t.string "schedule", null: false
     t.boolean "static", default: true, null: false
     t.datetime "updated_at", null: false
+    t.index ["key"], name: "index_solid_queue_recurring_tasks_on_key", unique: true
   end
 
   create_table "solid_queue_scheduled_executions", force: :cascade do |t|

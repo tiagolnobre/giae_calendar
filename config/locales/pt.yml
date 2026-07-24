@@ -121,6 +121,15 @@ pt:
     account_created: "Conta criada com sucesso."
     account_updated: "Conta atualizada com sucesso."
     invalid_credentials: "Email ou palavra-passe inválidos."
+  avaliacoes:
+    title: "Avaliações"
+    subject: "Disciplina"
+    back: "Voltar"
+    final_evaluation: "Avaliação Final"
+    rfa: "Resultado Final de Ano"
+    rfc: "Resultado Final de Ciclo"
+    positive: "Positivo"
+    no_data: "Sem dados de avaliações disponíveis."
   days:
     mon: "Seg"
     tue: "Ter"

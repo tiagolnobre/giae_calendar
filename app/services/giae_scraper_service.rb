@@ -124,6 +124,21 @@ class GiaeScraperService
     end
   end
 
+  def fetch_avaliacoes
+    url = "#{@base_url}/cgi-bin/webgiae2.exe/avaliacoesaluno"
+    body = { acao: "get_dados_iniciais" }.to_json
+
+    response = post_request(url, body)
+    data = JSON.parse(response.body)
+
+    tiposavaliacoes = parse_json_array(data["tiposavaliacoes"])
+    disciplinas = parse_json_array(data["disciplinas"])
+    avaliacoes = parse_json_array(data["avaliacoesnc"])
+    avaliacaofinal = parse_json_array(data["avaliacaofinal"])
+
+    { tiposavaliacoes: tiposavaliacoes, disciplinas: disciplinas, avaliacoes: avaliacoes, avaliacaofinal: avaliacaofinal }
+  end
+
   attr_reader :cookies
 
   private
@@ -269,15 +284,21 @@ class GiaeScraperService
     parsed_cookies
   end
 
-  def parse_refeicoes(refeicoes_raw)
-    case refeicoes_raw
+  def parse_json_array(raw)
+    case raw
     when String
-      JSON.parse(refeicoes_raw)
+      JSON.parse(raw)
     when Array
-      refeicoes_raw
+      raw
+    when nil
+      []
     else
-      raise "Unexpected refeicoes type: #{refeicoes_raw.class}"
+      raise "Unexpected type: #{raw.class}"
     end
+  end
+
+  def parse_refeicoes(refeicoes_raw)
+    parse_json_array(refeicoes_raw)
   end
 
   def extract_dish_type(descricaoprato)

@@ -1,0 +1,85 @@
+<div class="min-h-screen bg-gray-50">
+  <div class="max-w-md mx-auto px-4 py-6">
+    <div class="flex items-center justify-between mb-6">
+      <h1 class="text-2xl font-bold text-gray-900"><%= t("avaliacoes.title") %></h1>
+      <%= link_to calendar_path, class: "text-blue-600 hover:text-blue-800 text-sm" do %>
+        <%= t("avaliacoes.back") %>
+      <% end %>
+    </div>
+
+    <% if @error %>
+      <div class="bg-red-50 text-red-800 px-4 py-3 rounded-lg text-sm mb-4">
+        <%= @error %>
+      </div>
+    <% end %>
+
+    <% if @avaliacoes_data %>
+      <% tipos = @avaliacoes_data[:tiposavaliacoes] %>
+      <% disciplinas = @avaliacoes_data[:disciplinas] %>
+      <% avaliacoes = @avaliacoes_data[:avaliacoes] %>
+
+      <div class="bg-white rounded-xl shadow-sm overflow-hidden overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="bg-gray-50 border-b border-gray-200">
+              <th class="text-left px-3 py-2 font-semibold text-gray-700 whitespace-nowrap"><%= t("avaliacoes.subject") %></th>
+              <% tipos.each do |tipo| %>
+                <th class="text-center px-2 py-2 font-semibold text-gray-700 whitespace-nowrap"><%= tipo["sigla"] %></th>
+              <% end %>
+            </tr>
+          </thead>
+          <tbody>
+            <% disciplinas.each_with_index do |disciplina, idx| %>
+              <% next if idx > 0 && disciplinas[idx]["descricao"] == disciplinas[idx - 1]["descricao"] %>
+              <tr class="border-b border-gray-100 hover:bg-gray-50">
+                <td class="px-3 py-2.5 text-gray-800 font-medium whitespace-nowrap">
+                  <%= disciplina["sigla"] %>
+                </td>
+                <% tipos.each do |tipo| %>
+                  <% aval = avaliacoes.find { |a| a["idmatriculadisciplina"] == disciplina["idmatriculadisciplina"] && a["idtipoavaliacao"] == tipo["idtipoavaliacao"] } %>
+                  <td class="text-center px-2 py-2.5">
+                    <% if aval && aval["avaliacao"] %>
+                      <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
+                        <%= grade_color(aval["avaliacao"]) %>">
+                        <%= aval["avaliacao"] %>
+                      </span>
+                    <% elsif aval && aval["alinea"] %>
+                      <span class="text-gray-400 text-xs"><%= aval["alineadescricao"] %></span>
+                    <% else %>
+                      <span class="text-gray-300">—</span>
+                    <% end %>
+                  </td>
+                <% end %>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+
+      <% if @avaliacoes_data[:avaliacaofinal].present? %>
+        <div class="mt-6 bg-white rounded-xl shadow-sm p-4">
+          <h2 class="font-semibold text-gray-800 mb-2"><%= t("avaliacoes.final_evaluation") %></h2>
+          <% @avaliacoes_data[:avaliacaofinal].each do |final| %>
+            <div class="text-sm text-gray-600 space-y-1">
+              <% if final["descricaorfa"] %>
+                <p><span class="font-medium"><%= t("avaliacoes.rfa") %>:</span> <%= final["descricaorfa"] %>
+                  <% if final["positivorfa"] %><span class="text-green-600 ml-1"><%= t("avaliacoes.positive") %></span><% end %>
+                </p>
+              <% end %>
+              <% if final["descricaorfc"] %>
+                <p><span class="font-medium"><%= t("avaliacoes.rfc") %>:</span> <%= final["descricaorfc"] %>
+                  <% if final["positivorfc"] %><span class="text-green-600 ml-1"><%= t("avaliacoes.positive") %></span><% end %>
+                </p>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+
+    <% else %>
+      <div class="text-center py-8">
+        <p class="text-gray-500"><%= t("avaliacoes.no_data") %></p>
+      </div>
+    <% end %>
+  </div>
+</div>

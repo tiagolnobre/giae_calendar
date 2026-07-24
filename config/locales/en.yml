@@ -79,6 +79,15 @@ en:
     account_created: "Account created successfully."
     account_updated: "Account updated successfully."
     invalid_credentials: "Invalid email or password."
+  avaliacoes:
+    title: "Evaluations"
+    subject: "Subject"
+    back: "Back"
+    final_evaluation: "Final Evaluation"
+    rfa: "End of Year Result"
+    rfc: "End of Cycle Result"
+    positive: "Positive"
+    no_data: "No evaluation data available."
   days:
     mon: "Mon"
     tue: "Tue"
