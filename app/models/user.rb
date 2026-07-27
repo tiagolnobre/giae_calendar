@@ -11,6 +11,12 @@ class User < ApplicationRecord
   has_many :school_years, dependent: :destroy
   has_one_attached :photo
 
+  def photo_attached?
+    photo.attached?
+  rescue ActiveRecord::StatementInvalid
+    false
+  end
+
   validates :email, presence: true, uniqueness: true
 
   encrypts :giae_username, :giae_password, :giae_school_code
