@@ -37,19 +37,22 @@ class FetchAvaliacoesJobTest < ActiveJob::TestCase
       ],
       avaliacaofinal: [
         { "idmatricula" => 12564, "descricaorfa" => "Transitou", "positivorfa" => true }
-      ]
+      ],
+      guidutente: "e194deee-8df2-4304-918f-db100105273f"
     })
 
     mock_session_manager = mock("session_manager")
     mock_session_manager.stubs(:with_active_session).yields(mock_scraper)
     GiaeSessionManager.stubs(:new).with(@user).returns(mock_session_manager)
 
-    assert_difference -> { SchoolYear.count } => 1,
-                      -> { Subject.count } => 2,
-                      -> { EvaluationType.count } => 2,
-                      -> { Evaluation.count } => 1,
-                      -> { FinalEvaluation.count } => 1 do
-      @job.perform(@user)
+    assert_enqueued_with(job: FetchUserPhotoJob) do
+      assert_difference -> { SchoolYear.count } => 1,
+                        -> { Subject.count } => 2,
+                        -> { EvaluationType.count } => 2,
+                        -> { Evaluation.count } => 1,
+                        -> { FinalEvaluation.count } => 1 do
+        @job.perform(@user)
+      end
     end
 
     school_year = SchoolYear.last
@@ -74,7 +77,8 @@ class FetchAvaliacoesJobTest < ActiveJob::TestCase
         { "idmatriculadisciplina" => 2, "iddisciplina" => 1, "sigla" => "NEW", "descricao" => "New Subject", "ordem" => 1 }
       ],
       avaliacoes: [],
-      avaliacaofinal: []
+      avaliacaofinal: [],
+      guidutente: nil
     })
 
     mock_session_manager = mock("session_manager")
@@ -100,7 +104,8 @@ class FetchAvaliacoesJobTest < ActiveJob::TestCase
         { "idmatriculadisciplina" => 1, "iddisciplina" => 1, "sigla" => "PORT", "descricao" => "Português", "ordem" => 1 }
       ],
       avaliacoes: [],
-      avaliacaofinal: []
+      avaliacaofinal: [],
+      guidutente: nil
     })
 
     mock_session_manager = mock("session_manager")
@@ -118,7 +123,8 @@ class FetchAvaliacoesJobTest < ActiveJob::TestCase
       tiposavaliacoes: [],
       disciplinas: [],
       avaliacoes: [],
-      avaliacaofinal: []
+      avaliacaofinal: [],
+      guidutente: nil
     })
 
     mock_session_manager = mock("session_manager")
@@ -156,7 +162,8 @@ class FetchAvaliacoesJobTest < ActiveJob::TestCase
         { "idmatriculadisciplina" => 1, "iddisciplina" => 1, "sigla" => "PORT", "descricao" => "Português", "ordem" => 1 }
       ],
       avaliacoes: [],
-      avaliacaofinal: []
+      avaliacaofinal: [],
+      guidutente: nil
     })
 
     mock_session_manager = mock("session_manager")

@@ -726,6 +726,153 @@ class GiaeScraperServiceTest < ActiveSupport::TestCase
     assert_equal "1P", result[:tiposavaliacoes].first["sigla"]
   end
 
+  test "fetch_avaliacoes extracts guidutente from avaliacoesnc" do
+    scraper = GiaeScraperService.new(
+      username: @username,
+      password: @password,
+      login_url: @login_url,
+      school_code: @school_code,
+      session_cookie: "test_session"
+    )
+
+    mock_response = mock("response")
+    mock_response.stubs(:code).returns("200")
+    mock_response.stubs(:body).returns({
+      tiposavaliacoes: [].to_json,
+      disciplinas: [].to_json,
+      avaliacoesnc: [
+        { "guidutente" => "e194deee-8df2-4304-918f-db100105273f", idavaliacao: 1 }
+      ].to_json,
+      avaliacaofinal: [].to_json
+    }.to_json)
+
+    mock_http = mock("http")
+    mock_http.expects(:use_ssl=).with(true)
+    mock_http.expects(:verify_mode=).with(OpenSSL::SSL::VERIFY_NONE)
+    mock_http.expects(:open_timeout=).with(45)
+    mock_http.expects(:read_timeout=).with(45)
+    mock_http.stubs(:request).returns(mock_response)
+
+    Net::HTTP.expects(:new).returns(mock_http)
+
+    result = scraper.fetch_avaliacoes
+    assert_equal "e194deee-8df2-4304-918f-db100105273f", result[:guidutente]
+  end
+
+  test "fetch_avaliacoes returns nil guidutente when avaliacoesnc is empty" do
+    scraper = GiaeScraperService.new(
+      username: @username,
+      password: @password,
+      login_url: @login_url,
+      school_code: @school_code,
+      session_cookie: "test_session"
+    )
+
+    mock_response = mock("response")
+    mock_response.stubs(:code).returns("200")
+    mock_response.stubs(:body).returns({
+      tiposavaliacoes: [].to_json,
+      disciplinas: [].to_json,
+      avaliacoesnc: [].to_json,
+      avaliacaofinal: [].to_json
+    }.to_json)
+
+    mock_http = mock("http")
+    mock_http.expects(:use_ssl=).with(true)
+    mock_http.expects(:verify_mode=).with(OpenSSL::SSL::VERIFY_NONE)
+    mock_http.expects(:open_timeout=).with(45)
+    mock_http.expects(:read_timeout=).with(45)
+    mock_http.stubs(:request).returns(mock_response)
+
+    Net::HTTP.expects(:new).returns(mock_http)
+
+    result = scraper.fetch_avaliacoes
+    assert_nil result[:guidutente]
+  end
+
+  test "fetch_foto_utente returns image data on success" do
+    scraper = GiaeScraperService.new(
+      username: "18210",
+      password: @password,
+      login_url: @login_url,
+      school_code: @school_code,
+      session_cookie: "test_session"
+    )
+
+    image_bytes = (+"\xFF\xD8\xFF\xE0\x00\x10JFIF").force_encoding("ASCII-8BIT")
+
+    mock_response = mock("response")
+    mock_response.stubs(:code).returns("200")
+    mock_response.stubs(:body).returns(image_bytes)
+
+    mock_http = mock("http")
+    mock_http.expects(:use_ssl=).with(true)
+    mock_http.expects(:verify_mode=).with(OpenSSL::SSL::VERIFY_NONE)
+    mock_http.expects(:open_timeout=).with(15)
+    mock_http.expects(:read_timeout=).with(15)
+    mock_http.stubs(:request).returns(mock_response)
+
+    Net::HTTP.expects(:new).with("aemgn.giae.pt", 443).returns(mock_http)
+
+    result = scraper.fetch_foto_utente("e194deee-8df2-4304-918f-db100105273f")
+    assert_equal image_bytes, result
+  end
+
+  test "fetch_foto_utente returns nil on non-200" do
+    scraper = GiaeScraperService.new(
+      username: "18210",
+      password: @password,
+      login_url: @login_url,
+      school_code: @school_code,
+      session_cookie: "test_session"
+    )
+
+    mock_response = mock("response")
+    mock_response.stubs(:code).returns("404")
+    mock_response.stubs(:body).returns("Not Found")
+
+    mock_http = mock("http")
+    mock_http.expects(:use_ssl=).with(true)
+    mock_http.expects(:verify_mode=).with(OpenSSL::SSL::VERIFY_NONE)
+    mock_http.expects(:open_timeout=).with(15)
+    mock_http.expects(:read_timeout=).with(15)
+    mock_http.stubs(:request).returns(mock_response)
+
+    Net::HTTP.expects(:new).returns(mock_http)
+
+    result = scraper.fetch_foto_utente("e194deee-8df2-4304-918f-db100105273f")
+    assert_nil result
+  end
+
+  test "extract_guidutente extracts from first item" do
+    scraper = GiaeScraperService.new(
+      username: @username,
+      password: @password,
+      login_url: @login_url,
+      school_code: @school_code
+    )
+
+    raw = [
+      { "guidutente" => "abc-123", "idavaliacao" => 1 },
+      { "guidutente" => "def-456", "idavaliacao" => 2 }
+    ].to_json
+
+    result = scraper.send(:extract_guidutente, raw)
+    assert_equal "abc-123", result
+  end
+
+  test "extract_guidutente returns nil from empty array" do
+    scraper = GiaeScraperService.new(
+      username: @username,
+      password: @password,
+      login_url: @login_url,
+      school_code: @school_code
+    )
+
+    assert_nil scraper.send(:extract_guidutente, [].to_json)
+    assert_nil scraper.send(:extract_guidutente, nil)
+  end
+
   test "Error is a StandardError" do
     assert GiaeScraperService::Error < StandardError
   end

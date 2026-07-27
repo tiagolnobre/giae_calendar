@@ -72,6 +72,8 @@ class FetchAvaliacoesJob < ApplicationScraperJob
           )
         end
 
+        FetchUserPhotoJob.perform_later(user) if data[:guidutente].present?
+
         school_year.final_evaluations.destroy_all
         avaliacaofinal.each do |f|
           school_year.final_evaluations.create!(

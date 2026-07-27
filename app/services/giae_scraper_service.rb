@@ -135,8 +135,29 @@ class GiaeScraperService
     disciplinas = parse_json_array(data["disciplinas"])
     avaliacoes = parse_json_array(data["avaliacoesnc"])
     avaliacaofinal = parse_json_array(data["avaliacaofinal"])
+    avaliacoesnc_raw = data["avaliacoesnc"]
 
-    { tiposavaliacoes: tiposavaliacoes, disciplinas: disciplinas, avaliacoes: avaliacoes, avaliacaofinal: avaliacaofinal }
+    guidutente = extract_guidutente(avaliacoesnc_raw)
+
+    { tiposavaliacoes: tiposavaliacoes, disciplinas: disciplinas, avaliacoes: avaliacoes, avaliacaofinal: avaliacaofinal, guidutente: guidutente }
+  end
+
+  def fetch_foto_utente(guidutente)
+    uri = URI.parse("https://aemgn.giae.pt/temp_files/fotos_utentes/#{@username}_#{guidutente}.jpg")
+
+    http = Net::HTTP.new(uri.host, uri.port)
+    http.use_ssl = true
+    http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+    http.open_timeout = 15
+    http.read_timeout = 15
+
+    request = Net::HTTP::Get.new(uri.path)
+
+    response = http.request(request)
+
+    return nil unless response.code == "200"
+
+    response.body
   end
 
   attr_reader :cookies
@@ -282,6 +303,17 @@ class GiaeScraperService
     GiaeDebug.log("Final parsed cookies", parsed_cookies)
 
     parsed_cookies
+  end
+
+  def extract_guidutente(avaliacoesnc_raw)
+    items = parse_json_array(avaliacoesnc_raw)
+    return nil if items.empty?
+
+    items.each do |item|
+      guid = item["guidutente"]
+      return guid if guid.present?
+    end
+    nil
   end
 
   def parse_json_array(raw)
