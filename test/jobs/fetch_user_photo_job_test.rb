@@ -20,15 +20,25 @@ class FetchUserPhotoJobTest < ActiveJob::TestCase
     guidutente = "e194deee-8df2-4304-918f-db100105273f"
     image_bytes = (+"\xFF\xD8\xFF\xE0\x00\x10JFIF").force_encoding("ASCII-8BIT")
 
-    @user.update!(giae_username: "12345")
-
-    mock_scraper = mock("scraper")
-    mock_scraper.stubs(:fetch_foto_utente).with(guidutente).returns(image_bytes)
-
-    GiaeScraperService.stubs(:new).returns(mock_scraper)
+    @job.stubs(:fetch_image).returns(image_bytes)
 
     assert_difference "ActiveStorage::Blob.count", 1 do
       @job.perform(@user, guidutente)
+    end
+
+    assert @user.photo.attached?
+    assert_equal "image/jpeg", @user.photo.content_type
+  end
+
+  test "perform uses fotoutente URL when provided" do
+    guidutente = "e194deee-8df2-4304-918f-db100105273f"
+    fotoutente = "temp_files/fotos_utentes/18210_e194deee-8df2-4304-918f-db100105273f.jpg"
+    image_bytes = (+"\xFF\xD8\xFF\xE0\x00\x10JFIF").force_encoding("ASCII-8BIT")
+
+    @job.stubs(:fetch_image).with("https://aemgn.giae.pt/#{fotoutente}").returns(image_bytes)
+
+    assert_difference "ActiveStorage::Blob.count", 1 do
+      @job.perform(@user, guidutente, fotoutente)
     end
 
     assert @user.photo.attached?
@@ -53,12 +63,7 @@ class FetchUserPhotoJobTest < ActiveJob::TestCase
   test "perform does nothing when image fetch returns nil" do
     guidutente = "e194deee-8df2-4304-918f-db100105273f"
 
-    @user.update!(giae_username: "12345")
-
-    mock_scraper = mock("scraper")
-    mock_scraper.stubs(:fetch_foto_utente).returns(nil)
-
-    GiaeScraperService.stubs(:new).returns(mock_scraper)
+    @job.stubs(:fetch_image).returns(nil)
 
     assert_no_difference "ActiveStorage::Blob.count" do
       @job.perform(@user, guidutente)
@@ -94,9 +99,7 @@ class FetchUserPhotoJobTest < ActiveJob::TestCase
     mock_session_manager.stubs(:with_active_session).yields(mock_scraper)
     GiaeSessionManager.stubs(:new).returns(mock_session_manager)
 
-    mock_photo_scraper = mock("photo_scraper")
-    mock_photo_scraper.stubs(:fetch_foto_utente).returns(image_bytes)
-    GiaeScraperService.stubs(:new).returns(mock_photo_scraper)
+    @job.stubs(:fetch_image).returns(image_bytes)
 
     assert_difference "ActiveStorage::Blob.count", 1 do
       @job.perform(@user)

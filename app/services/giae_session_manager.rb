@@ -101,8 +101,9 @@ class GiaeSessionManager
         nome_escola: info["nomeescola"]
       )
 
-      guidutente = scraper.extract_guidutente_from_fotoutente(info["fotoutente"])
-      FetchUserPhotoJob.perform_later(@user, guidutente) if guidutente.present?
+      fotoutente = info["fotoutente"]
+      guidutente = scraper.extract_guidutente_from_fotoutente(fotoutente)
+      FetchUserPhotoJob.perform_later(@user, guidutente, fotoutente) if guidutente.present?
 
       session.reload  # Refresh lock
       session.transition_to_active!(scraper.cookies)
