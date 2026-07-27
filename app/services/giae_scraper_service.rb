@@ -166,6 +166,14 @@ class GiaeScraperService
     JSON.parse(response.body)
   end
 
+  def extract_guidutente_from_fotoutente(fotoutente)
+    return nil if fotoutente.blank?
+
+    filename = File.basename(fotoutente)
+    match = filename.match(/_(.+)\./)
+    match ? match[1] : nil
+  end
+
   attr_reader :cookies
 
   private

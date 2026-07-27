@@ -155,6 +155,7 @@ class GiaeSessionManagerTest < ActiveSupport::TestCase
     mock_scraper.stubs(:login!)  # Use stubs to allow any number of calls
     mock_scraper.stubs(:cookies).returns("new_session_cookie")  # Use stubs for cookies too
     mock_scraper.stubs(:fetch_info).returns("nomeutilizador" => "Test User", "nomeescola" => "Test School")
+    mock_scraper.stubs(:extract_guidutente_from_fotoutente).returns(nil)
     GiaeScraperService.stubs(:new).returns(mock_scraper)
 
     @manager.with_active_session { |_| }
@@ -180,6 +181,7 @@ class GiaeSessionManagerTest < ActiveSupport::TestCase
     mock_scraper.stubs(:login!)  # Use stubs to allow any number of calls
     mock_scraper.stubs(:cookies).returns("new_session_cookie")  # Use stubs for cookies too
     mock_scraper.stubs(:fetch_info).returns("nomeutilizador" => "Test User", "nomeescola" => "Test School")
+    mock_scraper.stubs(:extract_guidutente_from_fotoutente).returns(nil)
     GiaeScraperService.stubs(:new).returns(mock_scraper)
 
     @manager.with_active_session { |_| }
@@ -206,6 +208,7 @@ class GiaeSessionManagerTest < ActiveSupport::TestCase
     mock_scraper.stubs(:login!)  # Use stubs to allow any number of calls
     mock_scraper.stubs(:cookies).returns("new_session_cookie")  # Use stubs for cookies too
     mock_scraper.stubs(:fetch_info).returns("nomeutilizador" => "Test User", "nomeescola" => "Test School")
+    mock_scraper.stubs(:extract_guidutente_from_fotoutente).returns(nil)
     GiaeScraperService.stubs(:new).returns(mock_scraper)
 
     @manager.with_active_session { |_| }
@@ -261,6 +264,7 @@ class GiaeSessionManagerTest < ActiveSupport::TestCase
     mock_scraper = mock("scraper")
     mock_scraper.expects(:login!)
     mock_scraper.expects(:fetch_info).returns("nomeutilizador" => "Test User", "nomeescola" => "Test School")
+    mock_scraper.expects(:extract_guidutente_from_fotoutente).returns(nil)
     mock_scraper.expects(:cookies).returns("new_session_cookie")
     GiaeScraperService.expects(:new).returns(mock_scraper)
 
