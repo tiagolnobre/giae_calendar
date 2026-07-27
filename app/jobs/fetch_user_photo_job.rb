@@ -20,11 +20,7 @@ class FetchUserPhotoJob < ApplicationScraperJob
     image_data = fetch_image(photo_url)
     return if image_data.blank?
 
-    user.photo.attach(
-      io: StringIO.new(image_data.dup.force_encoding("BINARY")),
-      filename: "#{user.giae_username}_#{guidutente}.jpg",
-      content_type: "image/jpeg"
-    )
+    user.update!(photo_data: Base64.strict_encode64(image_data))
   end
 
   private

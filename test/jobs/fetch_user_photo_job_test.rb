@@ -16,18 +16,15 @@ class FetchUserPhotoJobTest < ActiveJob::TestCase
     assert_equal "default", FetchUserPhotoJob.queue_name
   end
 
-  test "perform attaches photo when guidutente and image present" do
+  test "perform stores photo_data when guidutente and image present" do
     guidutente = "e194deee-8df2-4304-918f-db100105273f"
     image_bytes = (+"\xFF\xD8\xFF\xE0\x00\x10JFIF").force_encoding("ASCII-8BIT")
 
     @job.stubs(:fetch_image).returns(image_bytes)
 
-    assert_difference "ActiveStorage::Blob.count", 1 do
-      @job.perform(@user, guidutente)
-    end
+    @job.perform(@user, guidutente)
 
-    assert @user.photo.attached?
-    assert_equal "image/jpeg", @user.photo.content_type
+    assert_equal Base64.strict_encode64(image_bytes), @user.reload.photo_data
   end
 
   test "perform uses fotoutente URL when provided" do
@@ -37,12 +34,9 @@ class FetchUserPhotoJobTest < ActiveJob::TestCase
 
     @job.stubs(:fetch_image).with("https://aemgn.giae.pt/#{fotoutente}").returns(image_bytes)
 
-    assert_difference "ActiveStorage::Blob.count", 1 do
-      @job.perform(@user, guidutente, fotoutente)
-    end
+    @job.perform(@user, guidutente, fotoutente)
 
-    assert @user.photo.attached?
-    assert_equal "image/jpeg", @user.photo.content_type
+    assert_equal Base64.strict_encode64(image_bytes), @user.reload.photo_data
   end
 
   test "perform does nothing when guidutente is nil" do
@@ -55,9 +49,9 @@ class FetchUserPhotoJobTest < ActiveJob::TestCase
     mock_session_manager.stubs(:with_active_session).yields(mock_scraper)
     GiaeSessionManager.stubs(:new).returns(mock_session_manager)
 
-    assert_no_difference "ActiveStorage::Blob.count" do
-      @job.perform(@user, nil)
-    end
+    @job.perform(@user, nil)
+
+    assert_nil @user.reload.photo_data
   end
 
   test "perform does nothing when image fetch returns nil" do
@@ -65,9 +59,9 @@ class FetchUserPhotoJobTest < ActiveJob::TestCase
 
     @job.stubs(:fetch_image).returns(nil)
 
-    assert_no_difference "ActiveStorage::Blob.count" do
-      @job.perform(@user, guidutente)
-    end
+    @job.perform(@user, guidutente)
+
+    assert_nil @user.reload.photo_data
   end
 
   test "perform handles integer user id" do
@@ -101,9 +95,9 @@ class FetchUserPhotoJobTest < ActiveJob::TestCase
 
     @job.stubs(:fetch_image).returns(image_bytes)
 
-    assert_difference "ActiveStorage::Blob.count", 1 do
-      @job.perform(@user)
-    end
+    @job.perform(@user)
+
+    assert_equal Base64.strict_encode64(image_bytes), @user.reload.photo_data
   end
 
   test "perform does nothing when guidutente is nil from session" do
@@ -116,9 +110,9 @@ class FetchUserPhotoJobTest < ActiveJob::TestCase
     mock_session_manager.stubs(:with_active_session).yields(mock_scraper)
     GiaeSessionManager.stubs(:new).returns(mock_session_manager)
 
-    assert_no_difference "ActiveStorage::Blob.count" do
-      @job.perform(@user)
-    end
+    @job.perform(@user)
+
+    assert_nil @user.reload.photo_data
   end
 
   test "perform re-raises SessionUnavailable error when guidutente not provided" do

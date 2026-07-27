@@ -89,8 +89,8 @@
             </div>
             <% if current_user.nome_utilizador.present? %>
               <div class="flex items-center gap-2">
-                <% if current_user.photo_attached? %>
-                  <%= image_tag current_user.photo, class: "h-8 w-8 rounded-full object-cover" %>
+                <% if current_user.photo_data.present? %>
+                  <img src="data:image/jpeg;base64,<%= current_user.photo_data %>" class="h-8 w-8 rounded-full object-cover">
                 <% else %>
                   <span class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-blue-100 text-blue-700 text-sm font-semibold"><%= current_user.nome_utilizador.first.upcase %></span>
                 <% end %>
