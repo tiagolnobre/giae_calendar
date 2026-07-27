@@ -87,10 +87,15 @@
                 <%= link_to t("nav.view_all"), notifications_path, class: "block p-3 text-center text-sm text-blue-600 hover:text-blue-800 border-t border-gray-100" %>
               </div>
             </div>
-            <% if current_user.photo_attached? %>
-              <%= image_tag current_user.photo, class: "h-8 w-8 rounded-full object-cover" %>
-            <% elsif current_user.nome_utilizador.present? %>
-              <span class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-blue-100 text-blue-700 text-sm font-semibold"><%= current_user.nome_utilizador.first.upcase %></span>
+            <% if current_user.nome_utilizador.present? %>
+              <div class="flex items-center gap-2">
+                <% if current_user.photo_attached? %>
+                  <%= image_tag current_user.photo, class: "h-8 w-8 rounded-full object-cover" %>
+                <% else %>
+                  <span class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-blue-100 text-blue-700 text-sm font-semibold"><%= current_user.nome_utilizador.first.upcase %></span>
+                <% end %>
+                <span class="hidden sm:inline text-sm text-gray-700 font-medium"><%= current_user.nome_utilizador %></span>
+              </div>
             <% end %>
             <div class="relative" data-controller="dropdown">
               <button type="button" data-action="dropdown#toggle" class="text-gray-600 hover:text-gray-800 touch-manipulation p-1">
