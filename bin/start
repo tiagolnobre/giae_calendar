@@ -7,10 +7,16 @@ if [ ! -f /data/production_queue.sqlite3 ]; then
   echo "Queue database created"
 fi
 
+# Run pending migrations (release machine doesn't mount the volume,
+# so migrations must run on the web machine at startup)
+echo "Running database migrations..."
+/rails/bin/rails db:migrate:primary
+echo "Migrations completed"
+
 # Start Solid Queue worker in background
 if [ "$RAILS_ENV" = "production" ]; then
   bundle exec rake solid_queue:start &
 fi
 
 # Start the Rails server
-exec ./bin/rails server
+exec /rails/bin/rails server

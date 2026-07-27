@@ -10,9 +10,9 @@ if [ ! -f /data/production_queue.sqlite3 ]; then
   echo "Queue database created successfully"
 fi
 
-# Run pending migrations
+# Run pending migrations (also run in bin/start on web machine startup)
 echo "Running database migrations..."
-./bin/rails db:migrate:primary
+/rails/bin/rails db:migrate:primary
 echo "Migrations completed"
 
 echo "Release completed successfully!"
