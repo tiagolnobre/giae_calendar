@@ -161,7 +161,7 @@ class GiaeScraperService
   end
 
   def fetch_info
-    url = "#{@base_url}/infoconfwebsite?app=giae"
+    url = "#{@base_url}/cgi-bin/webgiae2.exe/infoconfwebsite?app=giae"
     response = get_request(url)
     JSON.parse(response.body)
   end
