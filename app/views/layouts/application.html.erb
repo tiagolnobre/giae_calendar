@@ -89,8 +89,8 @@
             </div>
             <% if current_user.photo.attached? %>
               <%= image_tag current_user.photo, class: "h-8 w-8 rounded-full object-cover" %>
-            <% else %>
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-600"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 0 0-16 0"/></svg>
+            <% elsif current_user.nome_utilizador.present? %>
+              <span class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-blue-100 text-blue-700 text-sm font-semibold"><%= current_user.nome_utilizador.first.upcase %></span>
             <% end %>
             <div class="relative" data-controller="dropdown">
               <button type="button" data-action="dropdown#toggle" class="text-gray-600 hover:text-gray-800 touch-manipulation p-1">

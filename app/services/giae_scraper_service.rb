@@ -160,6 +160,12 @@ class GiaeScraperService
     response.body
   end
 
+  def fetch_info
+    url = "#{@base_url}/infoconfwebsite?app=giae"
+    response = get_request(url)
+    JSON.parse(response.body)
+  end
+
   attr_reader :cookies
 
   private
@@ -182,6 +188,32 @@ class GiaeScraperService
     response = post_request(url, body, skip_auth: true)
 
     GiaeDebug.log("Login response received", { status: response.code })
+
+    response
+  end
+
+  def get_request(url)
+    uri = URI.parse(url)
+
+    http = Net::HTTP.new(uri.host, uri.port)
+    http.use_ssl = uri.scheme == "https"
+    http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+    http.open_timeout = 15
+    http.read_timeout = 15
+
+    request = Net::HTTP::Get.new(uri.request_uri)
+    request["Accept"] = "application/json, text/javascript, */*; q=0.01"
+    request["Referer"] = @login_url
+    request["X-Requested-With"] = "XMLHttpRequest"
+
+    raise(Error, "Not logged in. Call login! first.") unless @cookies
+    request["Cookie"] = @cookies
+
+    response = http.request(request)
+
+    unless response.code == "200"
+      raise("GET request failed with status: #{response.code}, body: #{response.body[0..200]}")
+    end
 
     response
   end

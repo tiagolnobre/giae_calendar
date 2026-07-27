@@ -95,6 +95,12 @@ class GiaeSessionManager
       scraper = create_fresh_scraper
       scraper.login!
 
+      info = scraper.fetch_info
+      @user.update!(
+        nome_utilizador: info["nomeutilizador"],
+        nome_escola: info["nomeescola"]
+      )
+
       session.reload  # Refresh lock
       session.transition_to_active!(scraper.cookies)
 

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_27_112124) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_27_125828) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.bigint "blob_id", null: false
     t.datetime "created_at", null: false
@@ -298,6 +298,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_27_112124) do
     t.text "giae_username_ciphertext"
     t.boolean "in_app_notifications_enabled", default: true
     t.datetime "last_refreshed_at"
+    t.string "nome_escola"
+    t.string "nome_utilizador"
     t.string "password_digest", default: "", null: false
     t.datetime "remember_created_at"
     t.string "remember_token"
