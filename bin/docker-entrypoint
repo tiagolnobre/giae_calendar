@@ -23,10 +23,9 @@ fi
 
 echo "=== Starting Rails Application ==="
 
-# If running the rails server then create or migrate existing database
-if [ "${@: -2:1}" == "./bin/rails" ] && [ "${@: -1:1}" == "server" ]; then
-  ./bin/rails db:prepare
-fi
+# Run pending migrations before any command (ensures schema is up to date
+# even when fly rolling update doesn't restart the machine)
+./bin/rails db:migrate:primary
 
 # Start Solid Queue worker in background
 if [ "$RAILS_ENV" = "production" ]; then
