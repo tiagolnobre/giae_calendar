@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_28_113017) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_28_114425) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.bigint "blob_id", null: false
     t.datetime "created_at", null: false
@@ -107,6 +107,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_28_113017) do
   end
 
   create_table "giae_sessions", force: :cascade do |t|
+    t.integer "child_id"
     t.datetime "created_at", null: false
     t.string "error_message"
     t.datetime "expires_at"
@@ -120,6 +121,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_28_113017) do
     t.integer "status", default: 0, null: false
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
+    t.index ["child_id", "status"], name: "index_giae_sessions_on_child_id_and_status", where: "child_id IS NOT NULL"
+    t.index ["child_id"], name: "index_giae_sessions_on_child_id"
     t.index ["expires_at"], name: "index_giae_sessions_on_expires_at"
     t.index ["lock_key"], name: "index_giae_sessions_on_lock_key", unique: true, where: "lock_key IS NOT NULL"
     t.index ["updated_at"], name: "index_giae_sessions_on_updated_at"
@@ -129,6 +132,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_28_113017) do
 
   create_table "meal_details", force: :cascade do |t|
     t.string "bread"
+    t.integer "child_id"
     t.datetime "created_at", null: false
     t.date "date", null: false
     t.string "dessert"
@@ -138,17 +142,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_28_113017) do
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.string "vegetables"
+    t.index ["child_id", "date"], name: "index_meal_details_on_child_id_and_date", where: "child_id IS NOT NULL"
+    t.index ["child_id"], name: "index_meal_details_on_child_id"
     t.index ["user_id", "date"], name: "index_meal_details_on_user_id_and_date", unique: true
     t.index ["user_id"], name: "index_meal_details_on_user_id"
   end
 
   create_table "meal_tickets", force: :cascade do |t|
     t.boolean "bought"
+    t.integer "child_id"
     t.datetime "created_at", null: false
     t.date "date"
     t.string "dish_type"
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
+    t.index ["child_id", "date"], name: "index_meal_tickets_on_child_id_and_date", unique: true, where: "child_id IS NOT NULL"
+    t.index ["child_id"], name: "index_meal_tickets_on_child_id"
     t.index ["dish_type"], name: "index_meal_tickets_on_dish_type"
     t.index ["user_id", "date"], name: "index_meal_tickets_on_user_id_and_date", unique: true
     t.index ["user_id"], name: "index_meal_tickets_on_user_id"
@@ -156,6 +165,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_28_113017) do
 
   create_table "notifications", force: :cascade do |t|
     t.text "body"
+    t.integer "child_id"
     t.datetime "created_at", null: false
     t.integer "notifiable_id"
     t.string "notifiable_type"
@@ -164,6 +174,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_28_113017) do
     t.string "title"
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
+    t.index ["child_id"], name: "index_notifications_on_child_id"
     t.index ["notifiable_type", "notifiable_id"], name: "index_notifications_on_notifiable"
     t.index ["user_id"], name: "index_notifications_on_user_id"
   end
@@ -180,17 +191,23 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_28_113017) do
 
   create_table "saldo_records", force: :cascade do |t|
     t.integer "cents", null: false
+    t.integer "child_id"
     t.datetime "created_at", precision: nil
     t.datetime "updated_at", precision: nil
     t.integer "user_id", null: false
+    t.index ["child_id", "created_at"], name: "index_saldo_records_on_child_id_and_created_at"
+    t.index ["child_id"], name: "index_saldo_records_on_child_id"
     t.index ["user_id", "created_at"], name: "index_saldo_records_on_user_id_and_created_at"
   end
 
   create_table "school_years", force: :cascade do |t|
+    t.integer "child_id"
     t.datetime "created_at", null: false
     t.string "label", null: false
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
+    t.index ["child_id", "label"], name: "index_school_years_on_child_id_and_label", unique: true, where: "child_id IS NOT NULL"
+    t.index ["child_id"], name: "index_school_years_on_child_id"
     t.index ["user_id", "label"], name: "index_school_years_on_user_id_and_label", unique: true
     t.index ["user_id"], name: "index_school_years_on_user_id"
   end
