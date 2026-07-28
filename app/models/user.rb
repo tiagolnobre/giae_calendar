@@ -9,6 +9,7 @@ class User < ApplicationRecord
   has_many :notifications, dependent: :destroy
   has_many :push_subscriptions, dependent: :destroy
   has_many :school_years, dependent: :destroy
+  has_many :children, dependent: :destroy
 
   validates :email, presence: true, uniqueness: true
 

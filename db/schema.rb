@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_27_175456) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_28_113017) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.bigint "blob_id", null: false
     t.datetime "created_at", null: false
@@ -37,6 +37,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_27_175456) do
     t.bigint "blob_id", null: false
     t.string "variation_digest", null: false
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
+  end
+
+  create_table "children", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "giae_password"
+    t.text "giae_password_ciphertext"
+    t.string "giae_school_code"
+    t.string "giae_username"
+    t.text "giae_username_ciphertext"
+    t.datetime "last_refreshed_at"
+    t.string "nome_escola"
+    t.string "nome_utilizador"
+    t.text "photo_data"
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["user_id"], name: "index_children_on_user_id"
   end
 
   create_table "evaluation_types", force: :cascade do |t|
@@ -310,6 +326,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_27_175456) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "children", "users"
   add_foreign_key "evaluation_types", "school_years"
   add_foreign_key "evaluations", "evaluation_types"
   add_foreign_key "evaluations", "school_years"
