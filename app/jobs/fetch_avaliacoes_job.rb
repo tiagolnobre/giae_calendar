@@ -1,10 +1,10 @@
 class FetchAvaliacoesJob < ApplicationScraperJob
   queue_as :default
 
-  def perform(user)
-    user = user.is_a?(User) ? user : User.find(user)
+  def perform(child)
+    child = child.is_a?(Child) ? child : Child.find(child)
 
-    with_session(user) do |scraper|
+    with_session(child) do |scraper|
       data = scraper.fetch_avaliacoes
 
       ActiveRecord::Base.transaction do
@@ -19,7 +19,7 @@ class FetchAvaliacoesJob < ApplicationScraperJob
         reference_date = dates.any? ? Date.parse(dates.min) : Date.today
         school_year_label = SchoolYear.label_from_date(reference_date)
 
-        school_year = SchoolYear.find_or_create_by!(user: user, label: school_year_label)
+        school_year = SchoolYear.find_or_create_by!(user: child.user, child: child, label: school_year_label)
 
         school_year.evaluation_types.destroy_all
         tipos.each do |t|
@@ -72,7 +72,7 @@ class FetchAvaliacoesJob < ApplicationScraperJob
           )
         end
 
-        FetchUserPhotoJob.perform_later(user, data[:guidutente]) if data[:guidutente].present?
+        FetchUserPhotoJob.perform_later(child, data[:guidutente]) if data[:guidutente].present?
 
         school_year.final_evaluations.destroy_all
         avaliacaofinal.each do |f|

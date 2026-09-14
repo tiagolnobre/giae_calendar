@@ -57,9 +57,7 @@ class SaldoRecordTest < ActiveSupport::TestCase
     other_user = User.create!(
       email: "other@example.com",
       password: "password123",
-      password_confirmation: "password123",
-      giae_username: "otheruser",
-      giae_password: "otherpass"
+      password_confirmation: "password123"
     )
     other_record = other_user.saldo_records.create!(cents: 500)
 
@@ -78,9 +76,7 @@ class SaldoRecordTest < ActiveSupport::TestCase
     new_user = User.create!(
       email: "newuser@example.com",
       password: "password123",
-      password_confirmation: "password123",
-      giae_username: "newuser",
-      giae_password: "newpass"
+      password_confirmation: "password123"
     )
     assert_nil SaldoRecord.latest_for_user(new_user)
   end

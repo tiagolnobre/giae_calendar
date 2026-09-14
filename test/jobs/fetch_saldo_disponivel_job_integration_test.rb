@@ -4,8 +4,8 @@ require "test_helper"
 
 class FetchSaldoDisponivelJobIntegrationTest < ActiveJob::TestCase
   setup do
-    @user = users(:one)
-    @user.update!(
+    @child = children(:one)
+    @child.update!(
       giae_username: "test_user",
       giae_password: "test_pass",
       giae_school_code: "161676"
@@ -25,18 +25,18 @@ class FetchSaldoDisponivelJobIntegrationTest < ActiveJob::TestCase
   test "around_enqueue prevents duplicate jobs" do
     # First enqueue should succeed
     assert_enqueued_with(job: FetchSaldoDisponivelJob) do
-      FetchSaldoDisponivelJob.perform_later(@user)
+      FetchSaldoDisponivelJob.perform_later(@child)
     end
 
     # Simulate job in progress
-    Rails.cache.write("fetch_saldo_#{@user.id}", true)
+    Rails.cache.write("fetch_saldo_#{@child.id}", true)
 
     # Second enqueue should be skipped
     assert_no_enqueued_jobs do
-      FetchSaldoDisponivelJob.perform_later(@user)
+      FetchSaldoDisponivelJob.perform_later(@child)
     end
 
-    Rails.cache.delete("fetch_saldo_#{@user.id}")
+    Rails.cache.delete("fetch_saldo_#{@child.id}")
   end
 
   test "around_enqueue cleans up cache after job completes" do
@@ -46,7 +46,7 @@ class FetchSaldoDisponivelJobIntegrationTest < ActiveJob::TestCase
     # So after perform_later, the cache key may or may not exist depending on timing
     # The important thing is that the job runs with the cache key present
 
-    FetchSaldoDisponivelJob.perform_later(@user)
+    FetchSaldoDisponivelJob.perform_later(@child)
 
     # Job should be enqueued
     assert_enqueued_with(job: FetchSaldoDisponivelJob)
@@ -59,7 +59,7 @@ class FetchSaldoDisponivelJobIntegrationTest < ActiveJob::TestCase
   end
 
   test "around_enqueue cleans up cache on failure" do
-    FetchSaldoDisponivelJob.perform_later(@user)
+    FetchSaldoDisponivelJob.perform_later(@child)
 
     # Simulate job failure
     FetchSaldoDisponivelJob.any_instance.stubs(:perform).raises(StandardError)
@@ -70,10 +70,10 @@ class FetchSaldoDisponivelJobIntegrationTest < ActiveJob::TestCase
       # Expected
     end
 
-    assert_not Rails.cache.exist?("fetch_saldo_#{@user.id}")
+    assert_not Rails.cache.exist?("fetch_saldo_#{@child.id}")
   end
 
-  test "job handles integer user id" do
+  test "job handles integer child id" do
     mock_scraper = mock("scraper")
     mock_scraper.stubs(:cookies).returns("valid_cookie")
     mock_scraper.expects(:fetch_saldo_disponivel).returns({
@@ -84,11 +84,11 @@ class FetchSaldoDisponivelJobIntegrationTest < ActiveJob::TestCase
     GiaeScraperService.stubs(:new).returns(mock_scraper)
 
     assert_difference "SaldoRecord.count", 1 do
-      @job.perform(@user.id)
+      @job.perform(@child.id)
     end
   end
 
-  test "job handles User object" do
+  test "job handles Child object" do
     mock_scraper = mock("scraper")
     mock_scraper.stubs(:cookies).returns("valid_cookie")
     mock_scraper.expects(:fetch_saldo_disponivel).returns({
@@ -99,7 +99,7 @@ class FetchSaldoDisponivelJobIntegrationTest < ActiveJob::TestCase
     GiaeScraperService.stubs(:new).returns(mock_scraper)
 
     assert_difference "SaldoRecord.count", 1 do
-      result = @job.perform(@user)
+      result = @job.perform(@child)
       assert_equal 3166, result[:cents]
       assert_equal "31.66", result[:euros]
     end
@@ -115,10 +115,11 @@ class FetchSaldoDisponivelJobIntegrationTest < ActiveJob::TestCase
 
     GiaeScraperService.stubs(:new).returns(mock_scraper)
 
-    @job.perform(@user)
+    @job.perform(@child)
 
     record = SaldoRecord.last
-    assert_equal @user.id, record.user_id
+    assert_equal @child.user_id, record.user_id
+    assert_equal @child.id, record.child_id
     assert_equal 1575, record.cents
   end
 
@@ -128,7 +129,7 @@ class FetchSaldoDisponivelJobIntegrationTest < ActiveJob::TestCase
     )
 
     assert_raises(GiaeSessionManager::SessionUnavailable) do
-      @job.perform(@user)
+      @job.perform(@child)
     end
   end
 
@@ -147,7 +148,7 @@ class FetchSaldoDisponivelJobIntegrationTest < ActiveJob::TestCase
     log_output = StringIO.new
     Rails.logger = Logger.new(log_output)
 
-    @job.perform(@user)
+    @job.perform(@child)
 
     assert_match(/FetchSaldoDisponivelJob.*Completed/, log_output.string)
   ensure
@@ -164,7 +165,7 @@ class FetchSaldoDisponivelJobIntegrationTest < ActiveJob::TestCase
     Rails.logger = Logger.new(log_output)
 
     assert_raises(GiaeSessionManager::SessionUnavailable) do
-      @job.perform(@user)
+      @job.perform(@child)
     end
 
     assert_match(/Session unavailable.*Session expired/, log_output.string)
@@ -182,7 +183,7 @@ class FetchSaldoDisponivelJobIntegrationTest < ActiveJob::TestCase
     Rails.logger = Logger.new(log_output)
 
     assert_raises(StandardError) do
-      @job.perform(@user)
+      @job.perform(@child)
     end
 
     assert_match(/FetchSaldoDisponivelJob.*Error.*StandardError.*Unexpected error/, log_output.string)

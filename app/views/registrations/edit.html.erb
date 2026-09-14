@@ -22,22 +22,6 @@
         </div>
 
         <div class="border-t pt-4">
-          <h3 class="text-lg font-medium text-gray-900 mb-3">GIAE</h3>
-          
-          <div class="space-y-3">
-            <div>
-              <%= f.label :giae_username, t("registration.giae_username"), class: "block text-sm font-medium text-gray-700" %>
-              <%= f.text_field :giae_username, class: "mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" %>
-            </div>
-
-            <div>
-              <%= f.label :giae_password, t("registration.giae_password"), class: "block text-sm font-medium text-gray-700" %>
-              <%= f.password_field :giae_password, class: "mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" %>
-            </div>
-          </div>
-        </div>
-
-        <div class="border-t pt-4">
           <h3 class="text-lg font-medium text-gray-900 mb-3"><%= t("account.change_password") %></h3>
           
           <div class="space-y-3">
@@ -64,7 +48,11 @@
     </div>
 
     <div class="mt-4 text-center">
-      <%= link_to "← " + t("nav.back"), root_path, class: "text-blue-600 hover:text-blue-800" %>
-    </div>
+        <%= link_to t("children.title"), children_path, class: "text-blue-600 hover:text-blue-800 font-medium" %>
+      </div>
+
+      <div class="mt-2 text-center">
+        <%= link_to "← " + t("nav.back"), root_path, class: "text-blue-600 hover:text-blue-800" %>
+      </div>
   </div>
 </div>

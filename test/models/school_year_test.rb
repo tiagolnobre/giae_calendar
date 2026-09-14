@@ -3,7 +3,8 @@ require "test_helper"
 class SchoolYearTest < ActiveSupport::TestCase
   setup do
     @user = users(:one)
-    @school_year = SchoolYear.new(user: @user, label: "2025/2026")
+    @child = children(:one)
+    @school_year = SchoolYear.new(child: @child, user: @user, label: "2025/2026")
   end
 
   test "should be valid with required attributes" do
@@ -15,15 +16,15 @@ class SchoolYearTest < ActiveSupport::TestCase
     assert_not @school_year.valid?
   end
 
-  test "label should be unique per user" do
+  test "label should be unique per child" do
     @school_year.save!
-    duplicate = SchoolYear.new(user: @user, label: "2025/2026")
+    duplicate = SchoolYear.new(child: @child, user: @user, label: "2025/2026")
     assert_not duplicate.valid?
   end
 
-  test "same label allowed for different users" do
+  test "same label allowed for different children" do
     @school_year.save!
-    other = SchoolYear.new(user: users(:two), label: "2025/2026")
+    other = SchoolYear.new(child: children(:two), user: users(:two), label: "2025/2026")
     assert other.valid?
   end
 

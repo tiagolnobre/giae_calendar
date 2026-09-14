@@ -3,14 +3,14 @@
 class RefreshMealTicketsJob < ApplicationScraperJob
   queue_as :default
 
-  # Discard job if one is already running for this user
+  # Discard job if one is already running for this child
   around_enqueue do |job, block|
-    user = job.arguments.first
-    user_id = user.is_a?(User) ? user.id : user
-    key = "refresh_meal_tickets_#{user_id}"
+    child = job.arguments.first
+    child_id = child.is_a?(Child) ? child.id : child
+    key = "refresh_meal_tickets_#{child_id}"
 
     if Rails.cache.exist?(key)
-      Rails.logger.info "[RefreshMealTicketsJob] Job already running for user #{user_id}, skipping"
+      Rails.logger.info "[RefreshMealTicketsJob] Job already running for child #{child_id}, skipping"
       next
     end
 
@@ -22,12 +22,12 @@ class RefreshMealTicketsJob < ApplicationScraperJob
     end
   end
 
-  def perform(user)
-    user = user.is_a?(User) ? user : User.find(user)
+  def perform(child)
+    child = child.is_a?(Child) ? child : Child.find(child)
 
-    Rails.logger.info "[RefreshMealTicketsJob] Starting refresh for user #{user.id}"
+    Rails.logger.info "[RefreshMealTicketsJob] Starting refresh for child #{child.id}"
 
-    with_session(user) do |scraper|
+    with_session(child) do |scraper|
       results = scraper.fetch_refeicoes_compra
 
       begin
@@ -40,19 +40,21 @@ class RefreshMealTicketsJob < ApplicationScraperJob
       ActiveRecord::Base.transaction do
         results.each do |result|
           ticket = MealTicket.find_or_initialize_by(
-            user_id: user.id,
+            child: child,
             date: result[:date]
           )
+          ticket.user = child.user
           ticket.bought = result[:bought]
           ticket.dish_type = result[:dish_type]
           ticket.save!
 
           if meal_details[result[:date]]
             detail = MealDetail.find_or_initialize_by(
-              user_id: user.id,
+              child: child,
               date: result[:date],
               period: meal_details[result[:date]][:descricaoperiodo] || "Almoço"
             )
+            detail.user = child.user
             detail.soup = meal_details[result[:date]][:soup]
             detail.main_dish = meal_details[result[:date]][:main_dish]
             detail.vegetables = meal_details[result[:date]][:vegetables]
@@ -63,20 +65,21 @@ class RefreshMealTicketsJob < ApplicationScraperJob
         end
       end
 
-      user.update!(last_refreshed_at: Time.current)
+      child.update!(last_refreshed_at: Time.current)
 
-      NotificationService.new(user).notify(
+      NotificationService.new(child.user).notify(
         "Refresh Complete",
         "Your meal tickets have been updated",
-        types: [ :web_push ]
+        types: [ :web_push ],
+        child: child
       )
 
-      Rails.logger.info "[RefreshMealTicketsJob] Completed refresh for user #{user.id}, #{results.length} tickets processed"
+      Rails.logger.info "[RefreshMealTicketsJob] Completed refresh for child #{child.id}, #{results.length} tickets processed"
 
       results
     end
   rescue GiaeSessionManager::SessionUnavailable => e
-    Rails.logger.info "[RefreshMealTicketsJob] Session unavailable for user #{user.id}: #{e.message}, will retry"
+    Rails.logger.info "[RefreshMealTicketsJob] Session unavailable for child #{child.id}: #{e.message}, will retry"
     raise
   end
 end

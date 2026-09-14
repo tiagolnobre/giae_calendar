@@ -1,5 +1,6 @@
 one:
   user: one
+  child: one
   date: 2026-03-02
   period: "Almoço"
   soup: "Sopa de legumes"
@@ -10,6 +11,7 @@ one:
 
 two:
   user: two
+  child: two
   date: 2026-03-02
   period: "Almoço"
   soup: "Caldo verde"

@@ -7,9 +7,7 @@ class UserTest < ActiveSupport::TestCase
     @user = User.new(
       email: "test@example.com",
       password: "password123",
-      password_confirmation: "password123",
-      giae_username: "testuser",
-      giae_password: "testpass"
+      password_confirmation: "password123"
     )
   end
 
@@ -60,18 +58,6 @@ class UserTest < ActiveSupport::TestCase
     @user.meal_tickets.create!(date: Date.today, bought: true)
     assert_difference "MealTicket.count", -1 do
       @user.destroy
-    end
-  end
-
-  test "should enqueue RefreshMealTicketsJob on create" do
-    assert_enqueued_with(job: RefreshMealTicketsJob) do
-      @user.save!
-    end
-  end
-
-  test "should enqueue FetchSaldoDisponivelJob on create" do
-    assert_enqueued_with(job: FetchSaldoDisponivelJob) do
-      @user.save!
     end
   end
 
@@ -136,43 +122,6 @@ class UserTest < ActiveSupport::TestCase
     assert_not @user.remember_token_valid?("some_token")
   end
 
-  test "meal_tickets_for_month returns tickets for specified month" do
-    @user.save!
-
-    # Create tickets for different months
-    january_ticket = @user.meal_tickets.create!(date: Date.new(2024, 1, 15), bought: true)
-    february_ticket = @user.meal_tickets.create!(date: Date.new(2024, 2, 10), bought: true)
-
-    january_tickets = @user.meal_tickets_for_month(1, 2024)
-
-    assert_includes january_tickets, january_ticket
-    assert_not_includes january_tickets, february_ticket
-  end
-
-  test "meal_tickets_for_month orders by date" do
-    @user.save!
-
-    ticket1 = @user.meal_tickets.create!(date: Date.new(2024, 1, 10), bought: true)
-    ticket2 = @user.meal_tickets.create!(date: Date.new(2024, 1, 5), bought: true)
-    ticket3 = @user.meal_tickets.create!(date: Date.new(2024, 1, 20), bought: true)
-
-    tickets = @user.meal_tickets_for_month(1, 2024).to_a
-    assert_equal [ ticket2, ticket1, ticket3 ], tickets
-  end
-
-  test "current_month_tickets returns tickets for current month" do
-    @user.save!
-    today = Date.today
-
-    current_ticket = @user.meal_tickets.create!(date: today, bought: true)
-    other_ticket = @user.meal_tickets.create!(date: today.prev_month, bought: true)
-
-    current_tickets = @user.current_month_tickets
-
-    assert_includes current_tickets, current_ticket
-    assert_not_includes current_tickets, other_ticket
-  end
-
   test "unread_notifications returns unread notifications in reverse chronological order" do
     @user.save!
 
@@ -205,65 +154,16 @@ class UserTest < ActiveSupport::TestCase
     assert_equal 0, @user.unread_notification_count
   end
 
-  test "refresh_in_progress? returns true when meal ticket refresh is running" do
-    @user.save!
-    original_cache = Rails.cache
-    Rails.cache = ActiveSupport::Cache::MemoryStore.new
-    Rails.cache.write("refresh_meal_tickets_#{@user.id}", true)
-
-    assert @user.refresh_in_progress?
-
-    Rails.cache = original_cache
-  end
-
-  test "refresh_in_progress? returns true when saldo fetch is running" do
-    @user.save!
-    original_cache = Rails.cache
-    Rails.cache = ActiveSupport::Cache::MemoryStore.new
-    Rails.cache.write("fetch_saldo_#{@user.id}", true)
-
-    assert @user.refresh_in_progress?
-
-    Rails.cache = original_cache
-  end
-
-  test "refresh_in_progress? returns false when no refresh is running" do
-    @user.save!
-
-    assert_not @user.refresh_in_progress?
-  end
-
-  test "set_default_school_code sets default on create" do
-    user = User.create!(
-      email: "newuser@example.com",
-      password: "password123",
-      password_confirmation: "password123",
-      giae_username: "newuser",
-      giae_password: "newpass"
-    )
-
-    assert_equal User::DEFAULT_SCHOOL_CODE, user.giae_school_code
-  end
-
-  test "set_default_school_code preserves custom school code" do
-    user = User.create!(
-      email: "custom@example.com",
-      password: "password123",
-      password_confirmation: "password123",
-      giae_username: "custom",
-      giae_password: "pass",
-      giae_school_code: "999999"
-    )
-
-    assert_equal "999999", user.giae_school_code
-  end
-
   test "REMEMBER_EXPIRATION is set to 2 weeks" do
     assert_equal 2.weeks, User::REMEMBER_EXPIRATION
   end
 
-  test "DEFAULT_SCHOOL_CODE is set" do
-    assert_equal "161676", User::DEFAULT_SCHOOL_CODE
+  test "has_many children association" do
+    @user.save!
+    child = @user.children.create!(giae_username: "testuser", giae_password: "testpass")
+
+    assert_equal @user, child.user
+    assert_includes @user.children, child
   end
 
   test "has_many meal_tickets association" do
@@ -334,6 +234,15 @@ class UserTest < ActiveSupport::TestCase
     @user.notifications.create!(title: "Test", body: "Body")
 
     assert_difference "Notification.count", -1 do
+      @user.destroy
+    end
+  end
+
+  test "destroy cascades to children" do
+    @user.save!
+    @user.children.create!(giae_username: "testuser", giae_password: "testpass")
+
+    assert_difference "Child.count", -1 do
       @user.destroy
     end
   end

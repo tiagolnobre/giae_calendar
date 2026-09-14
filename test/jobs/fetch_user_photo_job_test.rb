@@ -2,7 +2,8 @@ require "test_helper"
 
 class FetchUserPhotoJobTest < ActiveJob::TestCase
   setup do
-    @user = users(:one)
+    @child = children(:one)
+    @child.update!(giae_username: "testuser", giae_password: "testpass")
     @job = FetchUserPhotoJob.new
     @original_cache = Rails.cache
     Rails.cache = ActiveSupport::Cache::MemoryStore.new
@@ -22,9 +23,9 @@ class FetchUserPhotoJobTest < ActiveJob::TestCase
 
     @job.stubs(:fetch_image).returns(image_bytes)
 
-    @job.perform(@user, guidutente)
+    @job.perform(@child, guidutente)
 
-    assert_equal Base64.strict_encode64(image_bytes), @user.reload.photo_data
+    assert_equal Base64.strict_encode64(image_bytes), @child.reload.photo_data
   end
 
   test "perform uses fotoutente URL when provided" do
@@ -34,9 +35,9 @@ class FetchUserPhotoJobTest < ActiveJob::TestCase
 
     @job.stubs(:fetch_image).with("https://aemgn.giae.pt/#{fotoutente}").returns(image_bytes)
 
-    @job.perform(@user, guidutente, fotoutente)
+    @job.perform(@child, guidutente, fotoutente)
 
-    assert_equal Base64.strict_encode64(image_bytes), @user.reload.photo_data
+    assert_equal Base64.strict_encode64(image_bytes), @child.reload.photo_data
   end
 
   test "perform does nothing when guidutente is nil" do
@@ -49,9 +50,9 @@ class FetchUserPhotoJobTest < ActiveJob::TestCase
     mock_session_manager.stubs(:with_active_session).yields(mock_scraper)
     GiaeSessionManager.stubs(:new).returns(mock_session_manager)
 
-    @job.perform(@user, nil)
+    @job.perform(@child, nil)
 
-    assert_nil @user.reload.photo_data
+    assert_nil @child.reload.photo_data
   end
 
   test "perform does nothing when image fetch returns nil" do
@@ -59,12 +60,12 @@ class FetchUserPhotoJobTest < ActiveJob::TestCase
 
     @job.stubs(:fetch_image).returns(nil)
 
-    @job.perform(@user, guidutente)
+    @job.perform(@child, guidutente)
 
-    assert_nil @user.reload.photo_data
+    assert_nil @child.reload.photo_data
   end
 
-  test "perform handles integer user id" do
+  test "perform handles integer child id" do
     mock_scraper = mock("scraper")
     mock_scraper.stubs(:fetch_avaliacoes).returns({
       guidutente: nil
@@ -75,14 +76,14 @@ class FetchUserPhotoJobTest < ActiveJob::TestCase
     GiaeSessionManager.stubs(:new).returns(mock_session_manager)
 
     assert_nothing_raised do
-      @job.perform(@user.id, nil)
+      @job.perform(@child.id, nil)
     end
   end
 
   test "perform fetches guidutente from session when not provided" do
     image_bytes = (+"\xFF\xD8\xFF\xE0\x00\x10JFIF").force_encoding("ASCII-8BIT")
 
-    @user.update!(giae_username: "12345")
+    @child.update!(giae_username: "12345")
 
     mock_scraper = mock("scraper")
     mock_scraper.stubs(:fetch_avaliacoes).returns({
@@ -95,9 +96,9 @@ class FetchUserPhotoJobTest < ActiveJob::TestCase
 
     @job.stubs(:fetch_image).returns(image_bytes)
 
-    @job.perform(@user)
+    @job.perform(@child)
 
-    assert_equal Base64.strict_encode64(image_bytes), @user.reload.photo_data
+    assert_equal Base64.strict_encode64(image_bytes), @child.reload.photo_data
   end
 
   test "perform does nothing when guidutente is nil from session" do
@@ -110,9 +111,9 @@ class FetchUserPhotoJobTest < ActiveJob::TestCase
     mock_session_manager.stubs(:with_active_session).yields(mock_scraper)
     GiaeSessionManager.stubs(:new).returns(mock_session_manager)
 
-    @job.perform(@user)
+    @job.perform(@child)
 
-    assert_nil @user.reload.photo_data
+    assert_nil @child.reload.photo_data
   end
 
   test "perform re-raises SessionUnavailable error when guidutente not provided" do
@@ -121,7 +122,7 @@ class FetchUserPhotoJobTest < ActiveJob::TestCase
     GiaeSessionManager.stubs(:new).returns(mock_session_manager)
 
     assert_raises(GiaeSessionManager::SessionUnavailable) do
-      @job.perform(@user)
+      @job.perform(@child)
     end
   end
 end

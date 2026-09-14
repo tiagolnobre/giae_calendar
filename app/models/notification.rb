@@ -2,6 +2,7 @@
 
 class Notification < ApplicationRecord
   belongs_to :user
+  belongs_to :child, optional: true
   belongs_to :notifiable, polymorphic: true, optional: true
 
   enum :notification_type, { in_app: 0, email: 1 }, default: :in_app

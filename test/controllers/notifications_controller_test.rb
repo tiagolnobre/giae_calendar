@@ -41,9 +41,7 @@ class NotificationsControllerTest < ActionDispatch::IntegrationTest
     other_user = User.create!(
       email: "other@example.com",
       password: "password123",
-      password_confirmation: "password123",
-      giae_username: "otheruser",
-      giae_password: "otherpass"
+      password_confirmation: "password123"
     )
     other_notification = Notification.create!(
       user: other_user,

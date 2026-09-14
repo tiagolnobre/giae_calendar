@@ -1,0 +1,42 @@
+<div class="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-8">
+  <div class="max-w-md w-full">
+    <div class="text-center mb-8">
+      <h1 class="text-2xl font-bold text-gray-900"><%= title %></h1>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm p-6">
+      <%= form_with model: child, url: child.new_record? ? children_path : child_path(child), method: child.new_record? ? :post : :patch, class: "space-y-4" do |f| %>
+        <% if child.errors.any? %>
+          <div class="bg-red-50 text-red-800 px-4 py-3 rounded-lg text-sm">
+            <ul class="list-disc list-inside">
+              <% child.errors.full_messages.each do |message| %>
+                <li><%= message %></li>
+              <% end %>
+            </ul>
+          </div>
+        <% end %>
+
+        <div>
+          <%= f.label :giae_username, t("registration.giae_username"), class: "block text-sm font-medium text-gray-700" %>
+          <%= f.text_field :giae_username, class: "mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" %>
+        </div>
+
+        <div>
+          <%= f.label :giae_password, t("registration.giae_password"), class: "block text-sm font-medium text-gray-700" %>
+          <%= f.password_field :giae_password, class: "mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" %>
+        </div>
+
+        <div>
+          <%= f.label :giae_school_code, t("registration.giae_school_code"), class: "block text-sm font-medium text-gray-700" %>
+          <%= f.text_field :giae_school_code, placeholder: Child::DEFAULT_SCHOOL_CODE, class: "mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" %>
+        </div>
+
+        <%= f.submit child.new_record? ? t("children.add") : t("children.update"), class: "w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium" %>
+      <% end %>
+    </div>
+
+    <div class="mt-4 text-center">
+      <%= link_to "← " + t("nav.back"), children_path, class: "text-blue-600 hover:text-blue-800" %>
+    </div>
+  </div>
+</div>

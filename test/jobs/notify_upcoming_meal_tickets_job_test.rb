@@ -26,7 +26,7 @@ class NotifyUpcomingMealTicketsJobTest < ActiveJob::TestCase
   test "should not notify user with ticket for tomorrow but no meal detail" do
     user = users(:one)
     user.update!(in_app_notifications_enabled: true)
-    user.meal_tickets.create!(date: @tomorrow, bought: true)
+    children(:one).meal_tickets.create!(date: @tomorrow, bought: true)
 
     initial_count = Notification.where(user: user).count
 
@@ -39,8 +39,8 @@ class NotifyUpcomingMealTicketsJobTest < ActiveJob::TestCase
   test "should notify user with ticket and meal detail for tomorrow" do
     user = users(:one)
     user.update!(in_app_notifications_enabled: true, email_notifications_enabled: false)
-    user.meal_tickets.create!(date: @tomorrow, bought: true)
-    user.meal_details.create!(date: @tomorrow, period: "Almoço", main_dish: "Arroz de pato")
+    children(:one).meal_tickets.create!(date: @tomorrow, bought: true)
+    children(:one).meal_details.create!(date: @tomorrow, period: "Almoço", main_dish: "Arroz de pato")
 
     initial_count = Notification.where(user: user).count
 
@@ -77,7 +77,7 @@ class NotifyUpcomingMealTicketsJobTest < ActiveJob::TestCase
 
     NotifyUpcomingMealTicketsJob.perform_now
 
-    notification = Notification.where(user: user).last
+    notification = Notification.where(user: user, notification_type: :in_app).last
     assert_equal "in_app", notification.notification_type
   end
 
@@ -159,8 +159,8 @@ class NotifyUpcomingMealTicketsJobTest < ActiveJob::TestCase
   test "should not send menu notification when meal detail has no main_dish" do
     user = users(:one)
     user.update!(in_app_notifications_enabled: true)
-    user.meal_tickets.create!(date: @tomorrow, bought: true)
-    user.meal_details.create!(date: @tomorrow, period: "Almoço", main_dish: nil)
+    children(:one).meal_tickets.create!(date: @tomorrow, bought: true)
+    children(:one).meal_details.create!(date: @tomorrow, period: "Almoço", main_dish: nil)
 
     initial_count = Notification.where(user: user).count
 
@@ -173,8 +173,8 @@ class NotifyUpcomingMealTicketsJobTest < ActiveJob::TestCase
   test "should send menu notification instead of no-ticket when user has ticket" do
     user = users(:one)
     user.update!(in_app_notifications_enabled: true, email_notifications_enabled: false)
-    user.meal_tickets.create!(date: @tomorrow, bought: true)
-    user.meal_details.create!(date: @tomorrow, period: "Almoço", main_dish: "Bacalhau à Brás")
+    children(:one).meal_tickets.create!(date: @tomorrow, bought: true)
+    children(:one).meal_details.create!(date: @tomorrow, period: "Almoço", main_dish: "Bacalhau à Brás")
 
     NotifyUpcomingMealTicketsJob.perform_now
 

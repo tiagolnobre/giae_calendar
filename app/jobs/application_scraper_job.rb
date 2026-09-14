@@ -46,7 +46,7 @@ class ApplicationScraperJob < ApplicationJob
 
   protected
 
-  def with_session(user)
-    GiaeSessionManager.new(user).with_active_session { |scraper| yield scraper }
+  def with_session(child)
+    GiaeSessionManager.new(child).with_active_session { |scraper| yield scraper }
   end
 end

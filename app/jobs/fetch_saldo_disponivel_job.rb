@@ -4,12 +4,12 @@ class FetchSaldoDisponivelJob < ApplicationScraperJob
   queue_as :default
 
   around_enqueue do |job, block|
-    user = job.arguments.first
-    user_id = user.is_a?(User) ? user.id : user
-    key = "fetch_saldo_#{user_id}"
+    child = job.arguments.first
+    child_id = child.is_a?(Child) ? child.id : child
+    key = "fetch_saldo_#{child_id}"
 
     if Rails.cache.exist?(key)
-      Rails.logger.info "[FetchSaldoDisponivelJob] Job already running for user #{user_id}, skipping"
+      Rails.logger.info "[FetchSaldoDisponivelJob] Job already running for child #{child_id}, skipping"
       next
     end
 
@@ -21,36 +21,37 @@ class FetchSaldoDisponivelJob < ApplicationScraperJob
     end
   end
 
-  def perform(user)
-    user = user.is_a?(User) ? user : User.find(user)
-    GiaeDebug.log("FetchSaldoDisponivelJob started", { user_id: user.id, job_id: job_id })
-    GiaeDebug.log("User found", { user_id: user.id, username: user.giae_username })
+  def perform(child)
+    child = child.is_a?(Child) ? child : Child.find(child)
+    GiaeDebug.log("FetchSaldoDisponivelJob started", { child_id: child.id, job_id: job_id })
+    GiaeDebug.log("Child found", { child_id: child.id, username: child.giae_username })
 
-    Rails.logger.info "[FetchSaldoDisponivelJob] Starting for user #{user.id}"
+    Rails.logger.info "[FetchSaldoDisponivelJob] Starting for child #{child.id}"
 
-    with_session(user) do |scraper|
+    with_session(child) do |scraper|
       GiaeDebug.log("In with_session block, about to fetch saldo")
 
       result = scraper.fetch_saldo_disponivel
       GiaeDebug.log("Saldo fetched successfully", result)
 
       SaldoRecord.create!(
-        user_id: user.id,
+        user: child.user,
+        child: child,
         cents: result[:cents]
       )
       GiaeDebug.log("SaldoRecord created")
 
-      Rails.logger.info "[FetchSaldoDisponivelJob] Completed for user #{user.id}, saldo: #{result[:euros]} (#{result[:cents]} cents)"
+      Rails.logger.info "[FetchSaldoDisponivelJob] Completed for child #{child.id}, saldo: #{result[:euros]} (#{result[:cents]} cents)"
 
       result
     end
   rescue GiaeSessionManager::SessionUnavailable => e
     GiaeDebug.log_error("SessionUnavailable error", e)
-    Rails.logger.info "[FetchSaldoDisponivelJob] Session unavailable for user #{user.id}: #{e.message}, will retry"
+    Rails.logger.info "[FetchSaldoDisponivelJob] Session unavailable for child #{child.id}: #{e.message}, will retry"
     raise
   rescue => e
     GiaeDebug.log_error("Unexpected error in job", e)
-    Rails.logger.error "[FetchSaldoDisponivelJob] Error for user #{user.id}: #{e.class}: #{e.message}"
+    Rails.logger.error "[FetchSaldoDisponivelJob] Error for child #{child.id}: #{e.class}: #{e.message}"
     raise
   end
 end

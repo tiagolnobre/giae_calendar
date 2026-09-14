@@ -2,7 +2,8 @@ require "test_helper"
 
 class FetchAvaliacoesJobTest < ActiveJob::TestCase
   setup do
-    @user = users(:one)
+    @child = children(:one)
+    @child.update!(giae_username: "testuser", giae_password: "testpass")
     @job = FetchAvaliacoesJob.new
     @original_cache = Rails.cache
     Rails.cache = ActiveSupport::Cache::MemoryStore.new
@@ -43,7 +44,7 @@ class FetchAvaliacoesJobTest < ActiveJob::TestCase
 
     mock_session_manager = mock("session_manager")
     mock_session_manager.stubs(:with_active_session).yields(mock_scraper)
-    GiaeSessionManager.stubs(:new).with(@user).returns(mock_session_manager)
+    GiaeSessionManager.stubs(:new).with(@child).returns(mock_session_manager)
 
     assert_enqueued_with(job: FetchUserPhotoJob) do
       assert_difference -> { SchoolYear.count } => 1,
@@ -51,13 +52,14 @@ class FetchAvaliacoesJobTest < ActiveJob::TestCase
                         -> { EvaluationType.count } => 2,
                         -> { Evaluation.count } => 1,
                         -> { FinalEvaluation.count } => 1 do
-        @job.perform(@user)
+        @job.perform(@child)
       end
     end
 
-    school_year = SchoolYear.last
+    school_year = SchoolYear.find_by(child: @child)
     assert_equal "2025/2026", school_year.label
-    assert_equal @user, school_year.user
+    assert_equal @child.user, school_year.user
+    assert_equal @child, school_year.child
     assert_equal 2, school_year.subjects.count
     assert_equal 2, school_year.evaluation_types.count
     assert_equal 1, school_year.evaluations.count
@@ -65,7 +67,7 @@ class FetchAvaliacoesJobTest < ActiveJob::TestCase
   end
 
   test "perform replaces existing school_year data" do
-    school_year = SchoolYear.create!(user: @user, label: "2025/2026")
+    school_year = SchoolYear.create!(child: @child, user: @child.user, label: "2025/2026")
     school_year.subjects.create!(idmatriculadisciplina: 1, sigla: "OLD", descricao: "Old Subject")
 
     mock_scraper = mock("scraper")
@@ -86,7 +88,7 @@ class FetchAvaliacoesJobTest < ActiveJob::TestCase
     GiaeSessionManager.stubs(:new).returns(mock_session_manager)
 
     assert_no_difference "SchoolYear.count" do
-      @job.perform(@user)
+      @job.perform(@child)
     end
 
     school_year.reload
@@ -94,7 +96,7 @@ class FetchAvaliacoesJobTest < ActiveJob::TestCase
     assert_equal "NEW", school_year.subjects.first.sigla
   end
 
-  test "perform handles integer user id" do
+  test "perform handles integer child id" do
     mock_scraper = mock("scraper")
     mock_scraper.stubs(:fetch_avaliacoes).returns({
       tiposavaliacoes: [
@@ -113,7 +115,7 @@ class FetchAvaliacoesJobTest < ActiveJob::TestCase
     GiaeSessionManager.stubs(:new).returns(mock_session_manager)
 
     assert_difference "SchoolYear.count", 1 do
-      @job.perform(@user.id)
+      @job.perform(@child.id)
     end
   end
 
@@ -135,7 +137,7 @@ class FetchAvaliacoesJobTest < ActiveJob::TestCase
       assert_no_difference -> { Subject.count } do
         assert_no_difference -> { EvaluationType.count } do
           assert_no_difference -> { Evaluation.count } do
-            @job.perform(@user)
+            @job.perform(@child)
           end
         end
       end
@@ -148,7 +150,7 @@ class FetchAvaliacoesJobTest < ActiveJob::TestCase
     GiaeSessionManager.stubs(:new).returns(mock_session_manager)
 
     assert_raises(GiaeSessionManager::SessionUnavailable) do
-      @job.perform(@user)
+      @job.perform(@child)
     end
   end
 
@@ -170,7 +172,7 @@ class FetchAvaliacoesJobTest < ActiveJob::TestCase
     mock_session_manager.stubs(:with_active_session).yields(mock_scraper)
     GiaeSessionManager.stubs(:new).returns(mock_session_manager)
 
-    @job.perform(@user)
-    assert_equal "2025/2026", SchoolYear.last.label
+    @job.perform(@child)
+    assert_equal "2025/2026", SchoolYear.find_by(child: @child).label
   end
 end

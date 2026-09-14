@@ -38,15 +38,40 @@
   <body class="bg-gray-50">
     <% if user_signed_in? %>
       <nav class="bg-white border-b border-gray-200 px-4 py-3">
-        <div class="max-w-md mx-auto flex items-center justify-between">
+        <div class="max-w-md mx-auto flex items-center justify-between gap-2">
           <%= link_to root_path do %>
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" class="h-8 w-8">
               <rect x="0" y="0" width="64" height="64" rx="6" ry="6" fill="#012a4a"/>
               <text x="50%" y="55%" text-anchor="middle" dominant-baseline="middle" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-weight="800" font-size="22" letter-spacing="1" fill="#ffffff">GIAE</text>
             </svg>
           <% end %>
+
+          <% if current_child %>
+            <div class="relative flex-1 min-w-0" data-controller="dropdown">
+              <button type="button" data-action="dropdown#toggle" class="w-full flex items-center justify-center gap-1.5 px-2 py-1 rounded-lg hover:bg-gray-100 transition-colors touch-manipulation">
+                <span class="text-sm font-medium text-gray-800 truncate"><%= current_child.display_name %></span>
+                <svg class="w-4 h-4 text-gray-500 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </button>
+              <div data-dropdown-target="menu" class="hidden absolute left-0 right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+                <div class="py-1 max-h-72 overflow-y-auto">
+                  <% current_user.children.each do |child| %>
+                    <%= button_to select_child_path(child),
+                        method: :post,
+                        class: "w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center justify-between gap-2" do %>
+                      <span class="truncate"><%= child.display_name %></span>
+                      <% if child.id == current_child.id %>
+                        <svg class="w-4 h-4 text-blue-600 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                      <% end %>
+                    <% end %>
+                  <% end %>
+                </div>
+                <%= link_to t("children.manage"), children_path, class: "block p-3 text-center text-sm text-blue-600 hover:text-blue-800 border-t border-gray-100" %>
+              </div>
+            </div>
+          <% end %>
+
           <div class="flex items-center gap-2 sm:gap-4">
-            <% latest_saldo = SaldoRecord.latest_for_user(current_user) %>
+            <% latest_saldo = current_child&.latest_saldo %>
             <% if latest_saldo %>
               <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                 <%= number_to_currency(latest_saldo.cents / 100.0, unit: "€", separator: ",", delimiter: ".") %>
@@ -87,14 +112,14 @@
                 <%= link_to t("nav.view_all"), notifications_path, class: "block p-3 text-center text-sm text-blue-600 hover:text-blue-800 border-t border-gray-100" %>
               </div>
             </div>
-            <% if current_user.nome_utilizador.present? %>
+            <% if current_child&.nome_utilizador.present? %>
               <div class="flex items-center gap-2">
-                <% if current_user.photo_data.present? %>
-                  <img src="data:image/jpeg;base64,<%= current_user.photo_data %>" class="h-8 w-8 rounded-full object-cover">
+                <% if current_child.photo_data.present? %>
+                  <img src="data:image/jpeg;base64,<%= current_child.photo_data %>" class="h-8 w-8 rounded-full object-cover">
                 <% else %>
-                  <span class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-blue-100 text-blue-700 text-sm font-semibold"><%= current_user.nome_utilizador.first.upcase %></span>
+                  <span class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-blue-100 text-blue-700 text-sm font-semibold"><%= current_child.nome_utilizador.first.upcase %></span>
                 <% end %>
-                <span class="hidden sm:inline text-sm text-gray-700 font-medium"><%= current_user.nome_utilizador %></span>
+                <span class="hidden sm:inline text-sm text-gray-700 font-medium"><%= current_child.nome_utilizador %></span>
               </div>
             <% end %>
             <div class="relative" data-controller="dropdown">
@@ -112,6 +137,11 @@
                       <span>Enable Notifications</span>
                     <% end %>
                   </button>
+                  <%= link_to children_path,
+                      class: "w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2" do %>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    <span><%= t("children.title") %></span>
+                  <% end %>
                   <%= link_to avaliacoes_path,
                       class: "w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2" do %>
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a2.5 2.5 0 0 1 0-5H20"/><path d="M9 9h.01"/><path d="M9 13h.01"/><path d="M9 17h.01"/></svg>

@@ -3,6 +3,7 @@ require "test_helper"
 class AvaliacoesControllerTest < ActionDispatch::IntegrationTest
   setup do
     @user = users(:one)
+    @child = children(:one)
     post sign_in_path, params: { email: @user.email, password: "password123" }
     follow_redirect!
   end
@@ -27,7 +28,7 @@ class AvaliacoesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "shows school year label when data exists" do
-    school_year = SchoolYear.create!(user: @user, label: "2025/2026")
+    school_year = @child.school_years.create!(label: "2025/2026")
     school_year.subjects.create!(idmatriculadisciplina: 1, sigla: "PORT", descricao: "Português", ordem: 1)
     eval_type = school_year.evaluation_types.create!(idtipoavaliacao: 1, sigla: "1P", descricao: "1st Period")
     subject = school_year.subjects.first
@@ -41,7 +42,7 @@ class AvaliacoesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "shows full subject name on desktop" do
-    school_year = SchoolYear.create!(user: @user, label: "2025/2026")
+    school_year = @child.school_years.create!(label: "2025/2026")
     school_year.subjects.create!(idmatriculadisciplina: 1, sigla: "PORT", descricao: "Português", ordem: 1)
 
     get avaliacoes_path
@@ -50,7 +51,7 @@ class AvaliacoesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "shows subject acronym on mobile" do
-    school_year = SchoolYear.create!(user: @user, label: "2025/2026")
+    school_year = @child.school_years.create!(label: "2025/2026")
     school_year.subjects.create!(idmatriculadisciplina: 1, sigla: "PORT", descricao: "Português", ordem: 1)
 
     get avaliacoes_path
@@ -59,7 +60,7 @@ class AvaliacoesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "shows evaluation types in table headers" do
-    school_year = SchoolYear.create!(user: @user, label: "2025/2026")
+    school_year = @child.school_years.create!(label: "2025/2026")
     school_year.evaluation_types.create!(idtipoavaliacao: 1, sigla: "1P", descricao: "1st Period")
     school_year.evaluation_types.create!(idtipoavaliacao: 2, sigla: "2P", descricao: "2nd Period")
 
@@ -70,7 +71,7 @@ class AvaliacoesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "shows final evaluations section" do
-    school_year = SchoolYear.create!(user: @user, label: "2025/2026")
+    school_year = @child.school_years.create!(label: "2025/2026")
     school_year.final_evaluations.create!(descricaorfa: "Transitou", positivorfa: true)
 
     get avaliacoes_path
@@ -80,7 +81,7 @@ class AvaliacoesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "refresh enqueues FetchAvaliacoesJob" do
-    assert_enqueued_with(job: FetchAvaliacoesJob) do
+    assert_enqueued_with(job: FetchAvaliacoesJob, args: [ @child.id ]) do
       post refresh_avaliacoes_path
     end
   end
@@ -91,7 +92,7 @@ class AvaliacoesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "shows dashes for missing evaluations" do
-    school_year = SchoolYear.create!(user: @user, label: "2025/2026")
+    school_year = @child.school_years.create!(label: "2025/2026")
     school_year.subjects.create!(idmatriculadisciplina: 1, sigla: "PORT", descricao: "Português", ordem: 1)
     school_year.evaluation_types.create!(idtipoavaliacao: 1, sigla: "1P", descricao: "1st Period")
 
@@ -101,7 +102,7 @@ class AvaliacoesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "handles alinea descriptions" do
-    school_year = SchoolYear.create!(user: @user, label: "2025/2026")
+    school_year = @child.school_years.create!(label: "2025/2026")
     subject = school_year.subjects.create!(idmatriculadisciplina: 1, sigla: "AEST", descricao: "Apoio ao Estudo", ordem: 1)
     eval_type = school_year.evaluation_types.create!(idtipoavaliacao: 1, sigla: "1P", descricao: "1st Period")
     school_year.evaluations.create!(
@@ -115,7 +116,7 @@ class AvaliacoesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "subjects ordered by ordem" do
-    school_year = SchoolYear.create!(user: @user, label: "2025/2026")
+    school_year = @child.school_years.create!(label: "2025/2026")
     school_year.subjects.create!(idmatriculadisciplina: 2, sigla: "MAT", descricao: "Matemática", ordem: 2)
     school_year.subjects.create!(idmatriculadisciplina: 1, sigla: "PORT", descricao: "Português", ordem: 1)
 
@@ -125,7 +126,7 @@ class AvaliacoesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "evaluation types ordered by start_date" do
-    school_year = SchoolYear.create!(user: @user, label: "2025/2026")
+    school_year = @child.school_years.create!(label: "2025/2026")
     school_year.evaluation_types.create!(idtipoavaliacao: 2, sigla: "2P", descricao: "2nd Period", start_date: "2026-01-05")
     school_year.evaluation_types.create!(idtipoavaliacao: 1, sigla: "1P", descricao: "1st Period", start_date: "2025-09-11")
 

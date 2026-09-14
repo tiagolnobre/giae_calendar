@@ -104,7 +104,7 @@ class NotificationTest < ActiveSupport::TestCase
   end
 
   test "polymorphic notifiable association should work" do
-    meal_ticket = @user.meal_tickets.create!(date: Date.today, bought: true)
+    meal_ticket = children(:one).meal_tickets.create!(date: Date.today, bought: true)
     @notification.notifiable = meal_ticket
     @notification.save!
 

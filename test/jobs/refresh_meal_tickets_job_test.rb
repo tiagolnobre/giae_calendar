@@ -4,7 +4,8 @@ require "test_helper"
 
 class RefreshMealTicketsJobTest < ActiveJob::TestCase
   setup do
-    @user = users(:one)
+    @child = children(:one)
+    @child.update!(giae_username: "testuser", giae_password: "testpass")
     @job = RefreshMealTicketsJob.new
     # Use a real cache for these tests since around_enqueue uses Rails.cache
     @original_cache = Rails.cache
@@ -19,29 +20,29 @@ class RefreshMealTicketsJobTest < ActiveJob::TestCase
     assert_equal "default", RefreshMealTicketsJob.queue_name
   end
 
-  test "around_enqueue prevents duplicate jobs for same user" do
+  test "around_enqueue prevents duplicate jobs for same child" do
     # First job should enqueue
-    assert_enqueued_with(job: RefreshMealTicketsJob, args: [ @user ]) do
-      RefreshMealTicketsJob.perform_later(@user)
+    assert_enqueued_with(job: RefreshMealTicketsJob, args: [ @child ]) do
+      RefreshMealTicketsJob.perform_later(@child)
     end
 
     # Set the cache key to simulate running job
-    Rails.cache.write("refresh_meal_tickets_#{@user.id}", true)
+    Rails.cache.write("refresh_meal_tickets_#{@child.id}", true)
 
     # Second job should be skipped
     assert_no_enqueued_jobs do
-      RefreshMealTicketsJob.perform_later(@user)
+      RefreshMealTicketsJob.perform_later(@child)
     end
   end
 
   test "around_enqueue cleans up cache after job completes" do
     # The cache is used during enqueue to prevent duplicate jobs, then cleaned up immediately
     # Cache is written before job is enqueued and deleted in ensure block after
-    cache_key = "refresh_meal_tickets_#{@user.id}"
+    cache_key = "refresh_meal_tickets_#{@child.id}"
 
     # Verify job is enqueued and cache is cleaned up
     assert_enqueued_jobs 1 do
-      RefreshMealTicketsJob.perform_later(@user)
+      RefreshMealTicketsJob.perform_later(@child)
     end
 
     # Cache should be cleaned up immediately after enqueue (in ensure block)
@@ -51,35 +52,36 @@ class RefreshMealTicketsJobTest < ActiveJob::TestCase
     perform_enqueued_jobs
   end
 
-  test "perform handles user passed as User object" do
+  test "perform handles child passed as Child object" do
     mock_scraper = mock("scraper")
     mock_scraper.expects(:fetch_refeicoes_compra).returns([
       { date: Date.today, bought: true, dish_type: "meat" }
     ])
     mock_scraper.expects(:fetch_meal_details).returns({})
 
-    @job.expects(:with_session).with(@user).yields(mock_scraper)
+    @job.expects(:with_session).with(@child).yields(mock_scraper)
 
     assert_difference "MealTicket.count", 1 do
-      @job.perform(@user)
+      @job.perform(@child)
     end
 
     ticket = MealTicket.last
-    assert_equal @user.id, ticket.user_id
+    assert_equal @child.id, ticket.child_id
+    assert_equal @child.user_id, ticket.user_id
     assert_equal Date.today, ticket.date
     assert ticket.bought
     assert_equal "meat", ticket.dish_type
   end
 
-  test "perform handles user passed as integer id" do
+  test "perform handles child passed as integer id" do
     mock_scraper = mock("scraper")
     mock_scraper.expects(:fetch_refeicoes_compra).returns([])
     mock_scraper.expects(:fetch_meal_details).returns({})
 
-    @job.expects(:with_session).with(@user).yields(mock_scraper)
+    @job.expects(:with_session).with(@child).yields(mock_scraper)
 
     assert_no_difference "MealTicket.count" do
-      @job.perform(@user.id)
+      @job.perform(@child.id)
     end
   end
 
@@ -99,11 +101,11 @@ class RefreshMealTicketsJobTest < ActiveJob::TestCase
       }
     })
 
-    @job.expects(:with_session).with(@user).yields(mock_scraper)
+    @job.expects(:with_session).with(@child).yields(mock_scraper)
 
     assert_difference "MealTicket.count", 1 do
       assert_difference "MealDetail.count", 1 do
-        @job.perform(@user)
+        @job.perform(@child)
       end
     end
 
@@ -122,10 +124,10 @@ class RefreshMealTicketsJobTest < ActiveJob::TestCase
     ])
     mock_scraper.expects(:fetch_meal_details).returns({})
 
-    @job.expects(:with_session).with(@user).yields(mock_scraper)
+    @job.expects(:with_session).with(@child).yields(mock_scraper)
 
     assert_no_difference "MealTicket.count" do
-      @job.perform(@user)
+      @job.perform(@child)
     end
 
     existing_ticket.reload
@@ -133,18 +135,18 @@ class RefreshMealTicketsJobTest < ActiveJob::TestCase
     assert_nil existing_ticket.dish_type
   end
 
-  test "perform updates user's last_refreshed_at timestamp" do
+  test "perform updates child's last_refreshed_at timestamp" do
     mock_scraper = mock("scraper")
     mock_scraper.expects(:fetch_refeicoes_compra).returns([])
     mock_scraper.expects(:fetch_meal_details).returns({})
 
-    @job.expects(:with_session).with(@user).yields(mock_scraper)
+    @job.expects(:with_session).with(@child).yields(mock_scraper)
 
-    @job.perform(@user)
+    @job.perform(@child)
 
-    @user.reload
-    assert @user.last_refreshed_at.present?
-    assert_in_delta Time.current, @user.last_refreshed_at, 1.second
+    @child.reload
+    assert @child.last_refreshed_at.present?
+    assert_in_delta Time.current, @child.last_refreshed_at, 1.second
   end
 
   test "perform handles missing meal details gracefully" do
@@ -154,21 +156,21 @@ class RefreshMealTicketsJobTest < ActiveJob::TestCase
     ])
     mock_scraper.expects(:fetch_meal_details).raises(StandardError, "Details unavailable")
 
-    @job.expects(:with_session).with(@user).yields(mock_scraper)
+    @job.expects(:with_session).with(@child).yields(mock_scraper)
 
     # Should not raise error, should create ticket without details
     assert_difference "MealTicket.count", 1 do
       assert_no_difference "MealDetail.count" do
-        @job.perform(@user)
+        @job.perform(@child)
       end
     end
   end
 
   test "perform re-raises SessionUnavailable error" do
-    @job.expects(:with_session).with(@user).raises(GiaeSessionManager::SessionUnavailable, "Session expired")
+    @job.expects(:with_session).with(@child).raises(GiaeSessionManager::SessionUnavailable, "Session expired")
 
     assert_raises(GiaeSessionManager::SessionUnavailable) do
-      @job.perform(@user)
+      @job.perform(@child)
     end
   end
 end

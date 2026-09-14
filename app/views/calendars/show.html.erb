@@ -4,15 +4,15 @@
       <h1 class="text-2xl font-bold text-gray-900"><%= t("calendar.meals") %></h1>
       <%= button_to refresh_calendar_path,
           method: :post,
-          class: "px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium #{@user.refresh_in_progress? ? 'opacity-50 cursor-not-allowed' : ''}",
+          class: "px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium #{@child.refresh_in_progress? ? 'opacity-50 cursor-not-allowed' : ''}",
           data: { turbo_submits_with: t("calendar.refreshing") },
-          disabled: @user.refresh_in_progress? do %>
+          disabled: @child.refresh_in_progress? do %>
         <%= t("calendar.refresh") %>
       <% end %>
     </div>
 
     <div id="refresh-status">
-      <%= render "refresh_status", user: @user, refreshing: @user.refresh_in_progress? %>
+      <%= render "refresh_status", child: @child, refreshing: @child.refresh_in_progress? %>
     </div>
 
     <% if @today_details %>
@@ -134,7 +134,7 @@
       </div>
       <div class="flex gap-4">
         <%= link_to t("calendar.history"), calendar_history_path, class: "text-blue-600 hover:text-blue-800" %>
-        <%= link_to t("calendar.edit_credentials"), edit_account_path, class: "text-blue-600 hover:text-blue-800" %>
+        <%= link_to t("calendar.manage_children"), children_path, class: "text-blue-600 hover:text-blue-800" %>
       </div>
     </div>
   </div>

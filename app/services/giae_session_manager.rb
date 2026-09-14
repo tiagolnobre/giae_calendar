@@ -5,14 +5,14 @@ class GiaeSessionManager
 
   class SessionUnavailable < StandardError; end
 
-  def initialize(user)
-    @user = user
+  def initialize(child)
+    @child = child
   end
 
   # Main entry point for jobs
   # Yields a GiaeScraperService with an active session
   def with_active_session
-    GiaeDebug.log("with_active_session started", { user_id: @user.id })
+    GiaeDebug.log("with_active_session started", { child_id: @child.id })
 
     session = acquire_or_refresh_session
     GiaeDebug.log("Session acquired", { session_id: session.id, status: session.status, refreshed_at: session.refreshed_at })
@@ -35,12 +35,12 @@ class GiaeSessionManager
     rescue GiaeScraperService::SessionExpired => e
       session.transition_to_expired!
       GiaeDebug.log_error("Session expired during request", e)
-      Rails.logger.warn "[GiaeSessionManager] Session expired during request for user #{@user.id}"
+      Rails.logger.warn "[GiaeSessionManager] Session expired during request for child #{@child.id}"
       raise SessionUnavailable, "Session expired, job will retry"
     rescue GiaeScraperService::AccessDenied => e
       session.transition_to_expired!
       GiaeDebug.log_error("Access denied during request", e)
-      Rails.logger.warn "[GiaeSessionManager] Access denied for user #{@user.id}, forcing new session"
+      Rails.logger.warn "[GiaeSessionManager] Access denied for child #{@child.id}, forcing new session"
       raise SessionUnavailable, "Access denied, forcing new session"
     end
   end
@@ -50,7 +50,8 @@ class GiaeSessionManager
   def acquire_or_refresh_session
     ActiveRecord::Base.transaction do
       session = GiaeSession.lock("FOR UPDATE NOWAIT")
-        .find_or_initialize_by(user: @user)
+        .find_or_initialize_by(child: @child)
+      session.user ||= @child.user
 
       case session.status
       when "active"
@@ -64,11 +65,11 @@ class GiaeSessionManager
       when "refreshing"
         # Another job is refreshing - check if lock is stale
         if session.locked_at && session.locked_at > LOCK_TIMEOUT.ago
-          Rails.logger.info "[GiaeSessionManager] Session locked by #{session.locked_by} for user #{@user.id}"
+          Rails.logger.info "[GiaeSessionManager] Session locked by #{session.locked_by} for child #{@child.id}"
           raise SessionUnavailable, "Session locked by another process"
         else
           # Stale lock, take over
-          Rails.logger.info "[GiaeSessionManager] Taking over stale lock for user #{@user.id}"
+          Rails.logger.info "[GiaeSessionManager] Taking over stale lock for child #{@child.id}"
           obtain_new_session!(session)
           return session
         end
@@ -80,7 +81,7 @@ class GiaeSessionManager
       end
     end
   rescue ActiveRecord::LockWaitTimeout
-    Rails.logger.info "[GiaeSessionManager] Could not acquire lock for user #{@user.id}"
+    Rails.logger.info "[GiaeSessionManager] Could not acquire lock for child #{@child.id}"
     raise SessionUnavailable, "Could not acquire session lock"
   end
 
@@ -90,39 +91,39 @@ class GiaeSessionManager
     begin
       session.transition_to_refreshing!(locked_by: job_info)
 
-      Rails.logger.info "[GiaeSessionManager] Logging in for user #{@user.id}"
+      Rails.logger.info "[GiaeSessionManager] Logging in for child #{@child.id}"
 
       scraper = create_fresh_scraper
       scraper.login!
 
       info = scraper.fetch_info
-      @user.update!(
+      @child.update!(
         nome_utilizador: info["nomeutilizador"],
         nome_escola: info["nomeescola"]
       )
 
       fotoutente = info["fotoutente"]
       guidutente = scraper.extract_guidutente_from_fotoutente(fotoutente)
-      FetchUserPhotoJob.perform_later(@user, guidutente, fotoutente) if guidutente.present?
+      FetchUserPhotoJob.perform_later(@child, guidutente, fotoutente) if guidutente.present?
 
       session.reload  # Refresh lock
       session.transition_to_active!(scraper.cookies)
 
-      Rails.logger.info "[GiaeSessionManager] Login successful for user #{@user.id}"
+      Rails.logger.info "[GiaeSessionManager] Login successful for child #{@child.id}"
     rescue => e
       session.reload
       session.transition_to_failed!(e.message)
-      Rails.logger.error "[GiaeSessionManager] Login failed for user #{@user.id}: #{e.message}"
+      Rails.logger.error "[GiaeSessionManager] Login failed for child #{@child.id}: #{e.message}"
       raise
     end
   end
 
   def create_fresh_scraper
     GiaeScraperService.new(
-      username: @user.giae_username,
-      password: @user.giae_password,
+      username: @child.giae_username,
+      password: @child.giae_password,
       login_url: Rails.application.config.giae_login_url,
-      school_code: @user.giae_school_code
+      school_code: @child.giae_school_code
     )
   end
 
@@ -133,16 +134,16 @@ class GiaeSessionManager
     GiaeDebug.log("Cookie decrypted", { has_cookie: cookie.present?, cookie_length: cookie&.length })
 
     unless cookie
-      Rails.logger.error "[GiaeSessionManager] Failed to decrypt cookie for user #{@user.id}"
+      Rails.logger.error "[GiaeSessionManager] Failed to decrypt cookie for child #{@child.id}"
       session.transition_to_expired!
       raise SessionUnavailable, "Session invalid"
     end
 
     GiaeScraperService.new(
-      username: @user.giae_username,
-      password: @user.giae_password,
+      username: @child.giae_username,
+      password: @child.giae_password,
       login_url: Rails.application.config.giae_login_url,
-      school_code: @user.giae_school_code,
+      school_code: @child.giae_school_code,
       session_cookie: cookie
     )
   end

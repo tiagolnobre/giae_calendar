@@ -8,14 +8,23 @@ class RegistrationsController < ApplicationController
   end
 
   def create
-    @user = User.new(user_params)
+    @user = User.new(user_params.except(:giae_username, :giae_password))
+    @child = @user.children.build(
+      giae_username: params[:user]&.dig(:giae_username),
+      giae_password: params[:user]&.dig(:giae_password)
+    )
 
-    if @user.save
-      sign_in(@user)
-      redirect_to calendar_path, notice: t("flash.account_created")
-    else
-      render :new, status: :unprocessable_entity
+    ActiveRecord::Base.transaction do
+      @user.save!
+      @child.save!
     end
+
+    sign_in(@user)
+    switch_to_child!(@child)
+    redirect_to calendar_path, notice: t("flash.account_created")
+  rescue ActiveRecord::RecordInvalid
+    @user.errors.merge!(@child.errors) if @child && @child.errors.any?
+    render :new, status: :unprocessable_entity
   end
 
   def edit
@@ -35,6 +44,6 @@ class RegistrationsController < ApplicationController
   private
 
   def user_params
-    params.require(:user).permit(:email, :password, :password_confirmation, :giae_username, :giae_password)
+    params.require(:user).permit(:email, :password, :password_confirmation)
   end
 end

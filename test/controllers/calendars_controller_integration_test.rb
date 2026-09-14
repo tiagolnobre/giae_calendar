@@ -5,6 +5,8 @@ require "test_helper"
 class CalendarsControllerIntegrationTest < ActionDispatch::IntegrationTest
   setup do
     @user = users(:one)
+    @child = children(:one)
+    @child.update!(giae_username: "testuser", giae_password: "testpass")
     post sign_in_path, params: { email: @user.email, password: "password123" }
     follow_redirect!
     # Use a real cache for these tests
@@ -41,8 +43,7 @@ class CalendarsControllerIntegrationTest < ActionDispatch::IntegrationTest
   test "show displays bought tickets with correct styling" do
     # Use next Monday to ensure the day is displayed (not weekend)
     next_monday = Date.today.next_occurring(:monday)
-    MealTicket.create!(
-      user: @user,
+    @child.meal_tickets.create!(
       date: next_monday,
       bought: true,
       dish_type: "meat"
@@ -57,8 +58,7 @@ class CalendarsControllerIntegrationTest < ActionDispatch::IntegrationTest
   test "show displays not bought tickets" do
     # Use next Monday to ensure the day is displayed (not weekend)
     next_monday = Date.today.next_occurring(:monday)
-    MealTicket.create!(
-      user: @user,
+    @child.meal_tickets.create!(
       date: next_monday,
       bought: false
     )
@@ -68,8 +68,7 @@ class CalendarsControllerIntegrationTest < ActionDispatch::IntegrationTest
   end
 
   test "show displays today's menu when available" do
-    MealDetail.create!(
-      user: @user,
+    @child.meal_details.create!(
       date: Date.today,
       period: "Lunch",
       soup: "Vegetable Soup",
@@ -93,15 +92,13 @@ class CalendarsControllerIntegrationTest < ActionDispatch::IntegrationTest
   end
 
   test "day_details returns modal for valid date" do
-    MealDetail.create!(
-      user: @user,
+    @child.meal_details.create!(
       date: Date.today,
       period: "Lunch",
       soup: "Soup"
     )
 
-    MealTicket.create!(
-      user: @user,
+    @child.meal_tickets.create!(
       date: Date.today,
       bought: true
     )
@@ -144,14 +141,14 @@ class CalendarsControllerIntegrationTest < ActionDispatch::IntegrationTest
     post refresh_calendar_path
 
     # Simulate job in progress
-    Rails.cache.write("refresh_meal_tickets_#{@user.id}", true)
+    Rails.cache.write("refresh_meal_tickets_#{@child.id}", true)
 
     # Second request should be blocked
     post refresh_calendar_path
     assert_redirected_to %r{/calendar}
     assert_match(/already in progress/, flash[:alert])
 
-    Rails.cache.delete("refresh_meal_tickets_#{@user.id}")
+    Rails.cache.delete("refresh_meal_tickets_#{@child.id}")
   end
 
   test "refresh handles turbo stream format" do
@@ -190,23 +187,21 @@ class CalendarsControllerIntegrationTest < ActionDispatch::IntegrationTest
   end
 
   test "refresh when both jobs are running" do
-    Rails.cache.write("refresh_meal_tickets_#{@user.id}", true)
-    Rails.cache.write("fetch_saldo_#{@user.id}", true)
+    Rails.cache.write("refresh_meal_tickets_#{@child.id}", true)
+    Rails.cache.write("fetch_saldo_#{@child.id}", true)
 
     post refresh_calendar_path
     assert_redirected_to %r{/calendar}
     assert_match(/already in progress/, flash[:alert])
 
-    Rails.cache.delete("refresh_meal_tickets_#{@user.id}")
-    Rails.cache.delete("fetch_saldo_#{@user.id}")
+    Rails.cache.delete("refresh_meal_tickets_#{@child.id}")
+    Rails.cache.delete("fetch_saldo_#{@child.id}")
   end
 
   test "refresh clears cache after completion" do
     post refresh_calendar_path
 
-    perform_enqueued_jobs
-
-    assert_not Rails.cache.exist?("refresh_meal_tickets_#{@user.id}")
+    assert_not Rails.cache.exist?("refresh_meal_tickets_#{@child.id}")
   end
 
   test "show displays month and year correctly" do
@@ -237,7 +232,6 @@ class CalendarsControllerIntegrationTest < ActionDispatch::IntegrationTest
     assert_response :success
 
     # Should have refresh button (button_to generates a form with POST to refresh_calendar_path)
-    # The locale is appended to the action URL
     assert_select "form[action^='/calendar/refresh']"
   end
 

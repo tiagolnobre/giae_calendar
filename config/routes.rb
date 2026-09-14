@@ -26,6 +26,15 @@ Rails.application.routes.draw do
   post "/calendar/refresh", to: "calendars#refresh", as: :refresh_calendar
   get "/calendar/day_details", to: "calendars#day_details", as: :day_details
 
+  get "/children", to: "children#index", as: :children
+  get "/children/new", to: "children#new", as: :new_child
+  post "/children", to: "children#create"
+  get "/children/:id/edit", to: "children#edit", as: :edit_child
+  patch "/children/:id", to: "children#update"
+  put "/children/:id", to: "children#update"
+  delete "/children/:id", to: "children#destroy", as: :child
+  post "/children/:id/select", to: "children#select", as: :select_child
+
   get "/avaliacoes", to: "avaliacoes#index", as: :avaliacoes
   post "/avaliacoes/refresh", to: "avaliacoes#refresh", as: :refresh_avaliacoes
 end

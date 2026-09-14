@@ -2,18 +2,16 @@
 
 one:
   user: one
+  child: one
   title: MyString
   body: MyText
-  notifiable: one
-  notifiable_type: Notifiable
   read_at: 2026-03-02 22:48:18
   notification_type: 1
 
 two:
   user: two
+  child: two
   title: MyString
   body: MyText
-  notifiable: two
-  notifiable_type: Notifiable
   read_at: 2026-03-02 22:48:18
   notification_type: 1

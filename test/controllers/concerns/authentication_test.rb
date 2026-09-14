@@ -75,6 +75,7 @@ class AuthenticationTest < ActionDispatch::IntegrationTest
     SaldoRecord.where(user_id: user_id).delete_all
     Notification.where(user_id: user_id).delete_all
     GiaeSession.where(user_id: user_id).delete_all
+    Child.where(user_id: user_id).delete_all
     User.delete(user_id)
 
     # Clear cache and reload

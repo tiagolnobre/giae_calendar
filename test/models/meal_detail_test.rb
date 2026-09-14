@@ -3,8 +3,9 @@ require "test_helper"
 class MealDetailTest < ActiveSupport::TestCase
   setup do
     @user = users(:one)
+    @child = children(:one)
     @meal_detail = MealDetail.new(
-      user: @user,
+      child: @child,
       date: Date.today,
       period: "Almoço",
       soup: "Sopa de Legumes",
@@ -20,7 +21,12 @@ class MealDetailTest < ActiveSupport::TestCase
   end
 
   test "should belong to user" do
+    @meal_detail.save!
     assert_equal @user, @meal_detail.user
+  end
+
+  test "should belong to child" do
+    assert_equal @child, @meal_detail.child
   end
 
   test "date should be present" do
@@ -35,10 +41,10 @@ class MealDetailTest < ActiveSupport::TestCase
     assert @meal_detail.errors[:period].any?
   end
 
-  test "should enforce unique date and period per user" do
+  test "should enforce unique date and period per child" do
     @meal_detail.save!
     duplicate = MealDetail.new(
-      user: @user,
+      child: @child,
       date: Date.today,
       period: "Almoço",
       soup: "Sopa de Feijão"
@@ -50,7 +56,7 @@ class MealDetailTest < ActiveSupport::TestCase
   test "different periods on same date should be valid" do
     @meal_detail.save!
     other_period = MealDetail.new(
-      user: @user,
+      child: @child,
       date: Date.today,
       period: "Jantar",
       soup: "Sopa de Feijão"
@@ -61,7 +67,7 @@ class MealDetailTest < ActiveSupport::TestCase
   test "same period on different dates should be valid" do
     @meal_detail.save!
     other_date = MealDetail.new(
-      user: @user,
+      child: @child,
       date: Date.tomorrow,
       period: "Almoço",
       soup: "Sopa de Feijão"
@@ -69,21 +75,15 @@ class MealDetailTest < ActiveSupport::TestCase
     assert other_date.valid?
   end
 
-  test "same date and period for different users should be valid" do
+  test "same date and period for different children should be valid" do
     @meal_detail.save!
-    other_user = User.create!(
-      email: "other@example.com",
-      password: "password123",
-      password_confirmation: "password123",
-      giae_username: "otheruser",
-      giae_password: "otherpass"
-    )
-    other_user_detail = MealDetail.new(
-      user: other_user,
+    other_child = children(:two)
+    other_child_detail = MealDetail.new(
+      child: other_child,
       date: Date.today,
       period: "Almoço",
       soup: "Sopa de Feijão"
     )
-    assert other_user_detail.valid?
+    assert other_child_detail.valid?
   end
 end

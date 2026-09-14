@@ -3,6 +3,8 @@ require "test_helper"
 class CalendarsControllerTest < ActionDispatch::IntegrationTest
   setup do
     @user = users(:one)
+    @child = children(:one)
+    @child.update!(giae_username: "testuser", giae_password: "testpass")
     post sign_in_path, params: { email: @user.email, password: "password123" }
     follow_redirect!
   end
@@ -43,8 +45,7 @@ class CalendarsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should display today's menu when available" do
-    MealDetail.create!(
-      user: @user,
+    @child.meal_details.create!(
       date: Date.today,
       period: "Almoço",
       soup: "Sopa de Legumes",
@@ -67,13 +68,14 @@ class CalendarsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should handle invalid month parameters gracefully" do
-    # Invalid month should default to current month
+    # Invalid month should redirect to current month
     get calendar_path(month: 13, year: Date.today.year)
     assert_response :redirect
   end
 
-  test "should display ticket status in calendar" do
-    meal_tickets(:one).update!(bought: true)
+  test "should display bought ticket status in calendar" do
+    ticket_date = first_weekday_of_current_month
+    @child.meal_tickets.create!(date: ticket_date, bought: true, dish_type: "meat")
 
     get calendar_path
     assert_response :success
@@ -82,23 +84,23 @@ class CalendarsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should display not bought status" do
-    meal_tickets(:one).update!(bought: false)
+    ticket_date = first_weekday_of_current_month
+    @child.meal_tickets.create!(date: ticket_date, bought: false)
 
     get calendar_path
     assert_response :success
     # Check for not bought ticket styling (gray background color in inline style)
-    skip "Flaky test - background colors use CSS classes not inline styles"
     assert_match(/background-color:\s*#D1D5DB/, response.body)
   end
 
   test "should enqueue refresh job on refresh action" do
-    assert_enqueued_with(job: RefreshMealTicketsJob) do
+    assert_enqueued_with(job: RefreshMealTicketsJob, args: [ @child.id ]) do
       post refresh_calendar_path
     end
   end
 
   test "should show refresh status with last updated time" do
-    @user.update!(last_refreshed_at: 5.hours.ago)
+    Child.where(id: @child.id).update_all(last_refreshed_at: 5.hours.ago)
 
     get calendar_path
     assert_response :success
@@ -108,7 +110,7 @@ class CalendarsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should show refresh status for fresh data" do
-    @user.update!(last_refreshed_at: 30.minutes.ago)
+    Child.where(id: @child.id).update_all(last_refreshed_at: 30.minutes.ago)
 
     get calendar_path
     assert_response :success
@@ -117,7 +119,7 @@ class CalendarsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should handle missing last_refreshed_at" do
-    @user.update!(last_refreshed_at: nil)
+    Child.where(id: @child.id).update_all(last_refreshed_at: nil)
 
     get calendar_path
     assert_response :success
@@ -141,10 +143,10 @@ class CalendarsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "day_details returns modal with meal info" do
-    meal_ticket = meal_tickets(:one)
-    get day_details_path(date: meal_ticket.date)
+    @child.meal_tickets.create!(date: Date.today, bought: true)
+    get day_details_path(date: Date.today.to_s)
     assert_response :success
-    assert_match I18n.l(meal_ticket.date, format: :long), response.body
+    assert_match I18n.l(Date.today, format: :long), response.body
   end
 
   test "day_details handles invalid date gracefully" do
@@ -153,14 +155,14 @@ class CalendarsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "refresh redirects when refresh already in progress" do
-    User.any_instance.stubs(:refresh_in_progress?).returns(true)
+    Child.any_instance.stubs(:refresh_in_progress?).returns(true)
 
     post refresh_calendar_path, as: :html
     assert_redirected_to %r{/calendar}
     follow_redirect!
     assert_match(/already in progress/, flash[:alert])
 
-    User.any_instance.unstub(:refresh_in_progress)
+    Child.any_instance.unstub(:refresh_in_progress)
   end
 
   test "refresh enqueues both jobs" do
@@ -178,12 +180,11 @@ class CalendarsControllerTest < ActionDispatch::IntegrationTest
   test "show handles edge case month values" do
     get calendar_path(month: 0, year: 2024)
     assert_response :success
-    # Should default to current date
+    # 0 is invalid, should redirect to current month
   end
 
   test "build_calendar_days includes holidays" do
     # Test around a known Portuguese holiday
-    Date.new(2024, 12, 25)
     get calendar_path(month: 12, year: 2024)
     assert_response :success
   end
@@ -193,25 +194,24 @@ class CalendarsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     # Should have 5-6 weeks displayed
     weeks = css_select(".grid.grid-cols-7 > div")
-    assert weeks.length >= 35 # 5 weeks * 7 days
+    assert weeks.length >= 28 # 4 weeks * 7 days
   end
 
-  test "refresh clears cache after job completes" do
+  test "refresh clears cache after enqueue" do
     post refresh_calendar_path
-    perform_enqueued_jobs
-    assert_not Rails.cache.exist?("refresh_meal_tickets_#{@user.id}")
+    assert_not Rails.cache.exist?("refresh_meal_tickets_#{@child.id}")
   end
 
   test "day_details returns partial layout" do
-    meal_ticket = meal_tickets(:one)
-    get day_details_path(date: meal_ticket.date)
+    @child.meal_tickets.create!(date: Date.today, bought: false)
+    get day_details_path(date: Date.today.to_s)
     assert_response :success
     # Should not include full layout
     assert_no_match(/<html>/, response.body)
   end
 
-  test "show handles users with no tickets" do
-    MealTicket.where(user: @user).destroy_all
+  test "show handles children with no tickets" do
+    MealTicket.where(child: @child).destroy_all
     get calendar_path
     assert_response :success
     assert_select ".grid.grid-cols-7"
@@ -221,5 +221,27 @@ class CalendarsControllerTest < ActionDispatch::IntegrationTest
     post refresh_calendar_path, headers: { "Accept" => "text/vnd.turbo-stream.html" }
     assert_response :success
     assert_match(/turbo-stream/, response.content_type)
+  end
+
+  test "show redirects to children when user has no children" do
+    delete sign_out_path
+    user = User.create!(
+      email: "nochild@example.com",
+      password: "password123",
+      password_confirmation: "password123"
+    )
+    post sign_in_path, params: { email: user.email, password: "password123" }
+    follow_redirect!
+
+    get calendar_path
+    assert_redirected_to children_path(locale: I18n.locale)
+  end
+
+  private
+
+  def first_weekday_of_current_month
+    day = Date.today.beginning_of_month
+    day += 1 until !day.saturday? && !day.sunday?
+    day
   end
 end

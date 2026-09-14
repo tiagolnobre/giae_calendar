@@ -2,6 +2,9 @@
 
 class GiaeSession < ApplicationRecord
   belongs_to :user
+  belongs_to :child, optional: true
+
+  before_validation :sync_user_id, on: :create
 
   # State machine statuses
   # pending: No session, needs login
@@ -110,7 +113,9 @@ class GiaeSession < ApplicationRecord
     )
   end
 
-  private
+  def sync_user_id
+    self.user_id = child.user_id if child && child.user_id && user_id.nil?
+  end
 
   def secret_key_base
     Rails.application.credentials.secret_key_base ||

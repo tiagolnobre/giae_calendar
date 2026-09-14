@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_28_114425) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_13_000001) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.bigint "blob_id", null: false
     t.datetime "created_at", null: false
@@ -144,7 +144,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_28_114425) do
     t.string "vegetables"
     t.index ["child_id", "date"], name: "index_meal_details_on_child_id_and_date", where: "child_id IS NOT NULL"
     t.index ["child_id"], name: "index_meal_details_on_child_id"
-    t.index ["user_id", "date"], name: "index_meal_details_on_user_id_and_date", unique: true
+    t.index ["user_id", "date"], name: "index_meal_details_on_user_id_and_date"
     t.index ["user_id"], name: "index_meal_details_on_user_id"
   end
 
@@ -159,7 +159,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_28_114425) do
     t.index ["child_id", "date"], name: "index_meal_tickets_on_child_id_and_date", unique: true, where: "child_id IS NOT NULL"
     t.index ["child_id"], name: "index_meal_tickets_on_child_id"
     t.index ["dish_type"], name: "index_meal_tickets_on_dish_type"
-    t.index ["user_id", "date"], name: "index_meal_tickets_on_user_id_and_date", unique: true
+    t.index ["user_id", "date"], name: "index_meal_tickets_on_user_id_and_date"
     t.index ["user_id"], name: "index_meal_tickets_on_user_id"
   end
 
@@ -208,7 +208,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_28_114425) do
     t.integer "user_id", null: false
     t.index ["child_id", "label"], name: "index_school_years_on_child_id_and_label", unique: true, where: "child_id IS NOT NULL"
     t.index ["child_id"], name: "index_school_years_on_child_id"
-    t.index ["user_id", "label"], name: "index_school_years_on_user_id_and_label", unique: true
+    t.index ["user_id", "label"], name: "index_school_years_on_user_id_and_label"
     t.index ["user_id"], name: "index_school_years_on_user_id"
   end
 
@@ -349,12 +349,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_28_114425) do
   add_foreign_key "evaluations", "school_years"
   add_foreign_key "evaluations", "subjects"
   add_foreign_key "final_evaluations", "school_years"
+  add_foreign_key "giae_sessions", "children", on_delete: :cascade
   add_foreign_key "giae_sessions", "users"
+  add_foreign_key "meal_details", "children"
   add_foreign_key "meal_details", "users"
+  add_foreign_key "meal_tickets", "children"
   add_foreign_key "meal_tickets", "users"
+  add_foreign_key "notifications", "children"
   add_foreign_key "notifications", "users"
   add_foreign_key "push_subscriptions", "users"
+  add_foreign_key "saldo_records", "children"
   add_foreign_key "saldo_records", "users"
+  add_foreign_key "school_years", "children"
   add_foreign_key "school_years", "users"
   add_foreign_key "subjects", "school_years"
 end

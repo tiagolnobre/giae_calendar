@@ -1,0 +1,42 @@
+<div class="min-h-screen bg-gray-50">
+  <div class="max-w-md mx-auto px-4 py-6">
+    <div class="flex items-center justify-between mb-6">
+      <h1 class="text-2xl font-bold text-gray-900"><%= t("children.title") %></h1>
+      <%= link_to t("children.add"), new_child_path, class: "px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium" %>
+    </div>
+
+    <% if @children.any? %>
+      <div class="bg-white rounded-xl shadow-sm divide-y divide-gray-100">
+        <% @children.each do |child| %>
+          <div class="px-4 py-3 flex items-center justify-between gap-3">
+            <div class="min-w-0">
+              <div class="flex items-center gap-2">
+                <p class="text-sm font-medium text-gray-800 truncate"><%= child.display_name %></p>
+                <% if child.id == current_child&.id %>
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"><%= t("children.current") %></span>
+                <% end %>
+              </div>
+              <p class="text-xs text-gray-500 mt-0.5"><%= child.nome_escola.presence || t("children.unknown_school") %></p>
+            </div>
+            <div class="flex items-center gap-2">
+              <%= button_to t("children.switch"), select_child_path(child), method: :post, class: "text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors" %>
+              <%= link_to t("children.edit"), edit_child_path(child), class: "text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors" %>
+              <%= button_to t("children.delete"), child_path(child), method: :delete,
+                    data: { turbo_confirm: t("children.delete_confirm") },
+                    class: "text-xs px-2 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors" %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="bg-white rounded-xl shadow-sm p-8 text-center">
+        <p class="text-gray-500"><%= t("children.none") %></p>
+        <%= link_to t("children.add"), new_child_path, class: "mt-4 inline-block px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium" %>
+      </div>
+    <% end %>
+
+    <div class="mt-4 text-center">
+      <%= link_to "← " + t("nav.back"), root_path, class: "text-blue-600 hover:text-blue-800" %>
+    </div>
+  </div>
+</div>

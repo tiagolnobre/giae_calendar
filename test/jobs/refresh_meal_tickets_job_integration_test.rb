@@ -4,8 +4,8 @@ require "test_helper"
 
 class RefreshMealTicketsJobIntegrationTest < ActiveJob::TestCase
   setup do
-    @user = users(:one)
-    @user.update!(
+    @child = children(:one)
+    @child.update!(
       giae_username: "test_user",
       giae_password: "test_pass",
       giae_school_code: "161676"
@@ -27,18 +27,18 @@ class RefreshMealTicketsJobIntegrationTest < ActiveJob::TestCase
   test "around_enqueue prevents duplicate jobs" do
     # First enqueue should succeed
     assert_enqueued_with(job: RefreshMealTicketsJob) do
-      RefreshMealTicketsJob.perform_later(@user)
+      RefreshMealTicketsJob.perform_later(@child)
     end
 
     # Simulate job in progress
-    Rails.cache.write("refresh_meal_tickets_#{@user.id}", true)
+    Rails.cache.write("refresh_meal_tickets_#{@child.id}", true)
 
     # Second enqueue should be skipped
     assert_no_enqueued_jobs do
-      RefreshMealTicketsJob.perform_later(@user)
+      RefreshMealTicketsJob.perform_later(@child)
     end
 
-    Rails.cache.delete("refresh_meal_tickets_#{@user.id}")
+    Rails.cache.delete("refresh_meal_tickets_#{@child.id}")
   end
 
   test "around_enqueue cleans up cache after job completes" do
@@ -48,7 +48,7 @@ class RefreshMealTicketsJobIntegrationTest < ActiveJob::TestCase
     # So after perform_later, the cache key may or may not exist depending on timing
     # The important thing is that the job runs with the cache key present
 
-    RefreshMealTicketsJob.perform_later(@user)
+    RefreshMealTicketsJob.perform_later(@child)
 
     # Job should be enqueued
     assert_enqueued_with(job: RefreshMealTicketsJob)
@@ -61,7 +61,7 @@ class RefreshMealTicketsJobIntegrationTest < ActiveJob::TestCase
   end
 
   test "around_enqueue cleans up cache on failure" do
-    RefreshMealTicketsJob.perform_later(@user)
+    RefreshMealTicketsJob.perform_later(@child)
 
     # Simulate job failure
     RefreshMealTicketsJob.any_instance.stubs(:perform).raises(StandardError)
@@ -72,10 +72,10 @@ class RefreshMealTicketsJobIntegrationTest < ActiveJob::TestCase
       # Expected
     end
 
-    assert_not Rails.cache.exist?("refresh_meal_tickets_#{@user.id}")
+    assert_not Rails.cache.exist?("refresh_meal_tickets_#{@child.id}")
   end
 
-  test "job handles integer user id" do
+  test "job handles integer child id" do
     mock_scraper = mock("scraper")
     mock_scraper.stubs(:cookies).returns("valid_cookie")
     mock_scraper.expects(:fetch_refeicoes_compra).returns([])
@@ -83,10 +83,10 @@ class RefreshMealTicketsJobIntegrationTest < ActiveJob::TestCase
 
     GiaeScraperService.stubs(:new).returns(mock_scraper)
 
-    @job.perform(@user.id)
+    @job.perform(@child.id)
   end
 
-  test "job handles User object" do
+  test "job handles Child object" do
     mock_scraper = mock("scraper")
     mock_scraper.stubs(:cookies).returns("valid_cookie")
     mock_scraper.expects(:fetch_refeicoes_compra).returns([
@@ -97,7 +97,7 @@ class RefreshMealTicketsJobIntegrationTest < ActiveJob::TestCase
     GiaeScraperService.stubs(:new).returns(mock_scraper)
 
     assert_difference "MealTicket.count", 1 do
-      @job.perform(@user)
+      @job.perform(@child)
     end
   end
 
@@ -122,7 +122,7 @@ class RefreshMealTicketsJobIntegrationTest < ActiveJob::TestCase
 
     assert_difference "MealTicket.count", 1 do
       assert_difference "MealDetail.count", 1 do
-        @job.perform(@user)
+        @job.perform(@child)
       end
     end
   end
@@ -135,11 +135,11 @@ class RefreshMealTicketsJobIntegrationTest < ActiveJob::TestCase
 
     GiaeScraperService.stubs(:new).returns(mock_scraper)
 
-    @job.perform(@user)
+    @job.perform(@child)
 
-    @user.reload
-    assert @user.last_refreshed_at.present?
-    assert_in_delta Time.current, @user.last_refreshed_at, 1.second
+    @child.reload
+    assert @child.last_refreshed_at.present?
+    assert_in_delta Time.current, @child.last_refreshed_at, 1.second
   end
 
   test "job handles session unavailable" do
@@ -148,13 +148,14 @@ class RefreshMealTicketsJobIntegrationTest < ActiveJob::TestCase
     )
 
     assert_raises(GiaeSessionManager::SessionUnavailable) do
-      @job.perform(@user)
+      @job.perform(@child)
     end
   end
 
   test "job updates existing tickets" do
     existing = MealTicket.create!(
-      user: @user,
+      child: @child,
+      user: @child.user,
       date: Date.today,
       bought: false,
       dish_type: "meat"
@@ -170,7 +171,7 @@ class RefreshMealTicketsJobIntegrationTest < ActiveJob::TestCase
     GiaeScraperService.stubs(:new).returns(mock_scraper)
 
     assert_no_difference "MealTicket.count" do
-      @job.perform(@user)
+      @job.perform(@child)
     end
 
     existing.reload
@@ -190,7 +191,7 @@ class RefreshMealTicketsJobIntegrationTest < ActiveJob::TestCase
 
     assert_difference "MealTicket.count", 1 do
       assert_no_difference "MealDetail.count" do
-        @job.perform(@user)
+        @job.perform(@child)
       end
     end
   end

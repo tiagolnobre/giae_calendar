@@ -4,7 +4,7 @@ module Authentication
   extend ActiveSupport::Concern
 
   included do
-    helper_method :user_session, :current_user, :user_signed_in?
+    helper_method :user_session, :current_user, :user_signed_in?, :current_child
   end
 
   def user_session
@@ -27,6 +27,22 @@ module Authentication
     @current_user
   end
 
+  # The child currently being viewed. Stored per-session, falls back to the
+  # user's first child.
+  def current_child
+    return @current_child if defined?(@current_child)
+    return nil unless current_user
+
+    child_id = session[:current_child_id]
+    @current_child = child_id ? current_user.children.find_by(id: child_id) : nil
+    @current_child ||= current_user.children.first
+  end
+
+  def switch_to_child!(child)
+    session[:current_child_id] = child.id
+    @current_child = child
+  end
+
   def user_signed_in?
     current_user.present?
   end
@@ -39,6 +55,7 @@ module Authentication
 
   def sign_in(user)
     session[:user_id] = user.id
+    session[:current_child_id] = nil
   end
 
   def sign_out
@@ -50,7 +67,9 @@ module Authentication
     end
 
     session.delete(:user_id)
+    session.delete(:current_child_id)
     @current_user = nil
+    @current_child = nil
   end
 
   def remember_user(user)

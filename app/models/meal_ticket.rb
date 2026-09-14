@@ -2,9 +2,12 @@
 
 class MealTicket < ApplicationRecord
   belongs_to :user
+  belongs_to :child, optional: true
+
+  before_validation :sync_user_id, on: :create
 
   validates :date, presence: true
-  validates :date, uniqueness: { scope: :user_id }
+  validates :date, uniqueness: { scope: :child_id }, if: -> { child_id.present? }
   validates :bought, inclusion: { in: [ true, false ] }
   validates :dish_type, inclusion: { in: [ "meat", "fish", nil ] }
 
@@ -20,5 +23,11 @@ class MealTicket < ApplicationRecord
     when "meat" then MEAT_ICON
     when "fish" then FISH_ICON
     end
+  end
+
+  private
+
+  def sync_user_id
+    self.user_id = child.user_id if child && child.user_id && user_id.nil?
   end
 end
