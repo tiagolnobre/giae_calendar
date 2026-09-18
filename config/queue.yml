@@ -16,3 +16,10 @@ test:
 
 production:
   <<: *default
+  # SQLite is a single-writer database: run jobs one at a time so parallel
+  # job threads don't collide on the write lock (database is locked).
+  workers:
+    - queues: "*"
+      threads: 1
+      processes: 1
+      polling_interval: 0.1

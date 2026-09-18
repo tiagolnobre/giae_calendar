@@ -41,7 +41,7 @@ class ApplicationScraperJob < ApplicationJob
   # Retry on SQLite lock errors (database busy)
   retry_on ActiveRecord::StatementTimeout,
     wait: 30.seconds,
-    attempts: 3,
+    attempts: 5,
     jitter: 0
 
   protected
