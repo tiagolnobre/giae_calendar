@@ -113,13 +113,12 @@
               </div>
             </div>
             <% if current_child&.nome_utilizador.present? %>
-              <div class="flex items-center gap-2">
+              <div class="flex items-center">
                 <% if current_child.photo_data.present? %>
                   <img src="data:image/jpeg;base64,<%= current_child.photo_data %>" class="h-8 w-8 rounded-full object-cover">
                 <% else %>
                   <span class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-blue-100 text-blue-700 text-sm font-semibold"><%= current_child.nome_utilizador.first.upcase %></span>
                 <% end %>
-                <span class="hidden sm:inline text-sm text-gray-700 font-medium"><%= current_child.nome_utilizador %></span>
               </div>
             <% end %>
             <div class="relative" data-controller="dropdown">
