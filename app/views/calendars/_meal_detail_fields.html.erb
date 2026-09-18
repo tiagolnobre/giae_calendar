@@ -1,0 +1,34 @@
+<% if meal_detail.soup.present? %>
+  <div class="flex items-start">
+    <span class="font-medium text-gray-500 w-24 flex-shrink-0"><%= t("calendar.soup") %>:</span>
+    <span class="text-gray-800"><%= meal_detail.soup %></span>
+  </div>
+<% end %>
+
+<% if meal_detail.main_dish.present? %>
+  <div class="flex items-start">
+    <span class="font-medium text-gray-500 w-24 flex-shrink-0"><%= t("calendar.main_dish") %>:</span>
+    <span class="text-gray-800"><%= meal_detail.main_dish %></span>
+  </div>
+<% end %>
+
+<% if meal_detail.vegetables.present? %>
+  <div class="flex items-start">
+    <span class="font-medium text-gray-500 w-24 flex-shrink-0"><%= t("calendar.vegetables") %>:</span>
+    <span class="text-gray-800"><%= meal_detail.vegetables %></span>
+  </div>
+<% end %>
+
+<% if meal_detail.dessert.present? %>
+  <div class="flex items-start">
+    <span class="font-medium text-gray-500 w-24 flex-shrink-0"><%= t("calendar.dessert") %>:</span>
+    <span class="text-gray-800"><%= meal_detail.dessert %></span>
+  </div>
+<% end %>
+
+<% if meal_detail.bread.present? %>
+  <div class="flex items-start">
+    <span class="font-medium text-gray-500 w-24 flex-shrink-0"><%= t("calendar.bread") %>:</span>
+    <span class="text-gray-800"><%= meal_detail.bread %></span>
+  </div>
+<% end %>

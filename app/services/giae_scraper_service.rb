@@ -98,7 +98,9 @@ class GiaeScraperService
       results << { date: date, bought: bought, dish_type: dish_type }
     end
 
-    results
+    # GIAE returns one entry per menu option (normal + vegetarian) for each
+    # date; keep the first so dish_type reflects the normal menu.
+    results.uniq { |r| r[:date] }
   end
 
   def fetch_meal_details
@@ -110,11 +112,14 @@ class GiaeScraperService
 
     refeicoes = parse_refeicoes(data["refeicoes"])
 
-    refeicoes.each_with_object({}) do |ref, acc|
+    refeicoes.each_with_object(Hash.new { |h, k| h[k] = [] }) do |ref, acc|
       date = Date.parse(ref["data"])
 
-      acc[date] = {
-        descricaoperiodo: ref["descricaoperiodo"],
+      period = ref["descricaoperiodo"]
+      period = "#{period} Vegetariano" if vegetarian_option?(ref)
+
+      acc[date] << {
+        period: period,
         soup: ref["sopa"],
         main_dish: ref["prato"],
         vegetables: ref["vegetais"],
@@ -387,6 +392,10 @@ class GiaeScraperService
     elsif descricaoprato_down.include?("peixe")
       "fish"
     end
+  end
+
+  def vegetarian_option?(ref)
+    ref["descricaoprato"].to_s.downcase.include?("vegetariano")
   end
 
   def portuguese_holiday?(date)

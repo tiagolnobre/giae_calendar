@@ -19,7 +19,7 @@ class CalendarsController < ApplicationController
 
     @calendar_days = build_calendar_days
 
-    @today_details = @child.meal_details.find_by(date: Date.today)
+    @today_details = @child.meal_details.where(date: Date.today).order(:period)
   end
 
   def refresh
@@ -62,10 +62,10 @@ class CalendarsController < ApplicationController
       Date.today
     end
 
-    @meal_detail = @child.meal_details.find_by(date: @date)
+    @meal_details = @child.meal_details.where(date: @date).order(:period)
     @meal_ticket = @child.meal_tickets.find_by(date: @date)
 
-    render partial: "calendars/day_modal", layout: false, locals: { date: @date, meal_detail: @meal_detail, meal_ticket: @meal_ticket }
+    render partial: "calendars/day_modal", layout: false, locals: { date: @date, meal_details: @meal_details, meal_ticket: @meal_ticket }
   end
 
   private

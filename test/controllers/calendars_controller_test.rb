@@ -57,6 +57,25 @@ class CalendarsControllerTest < ActionDispatch::IntegrationTest
     assert_select "h3", I18n.t("calendar.today_menu")
   end
 
+  test "should display both normal and vegetarian menus for today" do
+    @child.meal_details.create!(
+      date: Date.today,
+      period: "Almoço",
+      main_dish: "Frango Assado"
+    )
+    @child.meal_details.create!(
+      date: Date.today,
+      period: "Almoço Vegetariano",
+      main_dish: "Tofu Estufado"
+    )
+
+    get calendar_path
+    assert_response :success
+    assert_match "Almoço Vegetariano", response.body
+    assert_match "Frango Assado", response.body
+    assert_match "Tofu Estufado", response.body
+  end
+
   test "should handle year boundary when navigating months" do
     # Test December to January transition
     get calendar_path(month: 12, year: Date.today.year - 1)
@@ -144,9 +163,16 @@ class CalendarsControllerTest < ActionDispatch::IntegrationTest
 
   test "day_details returns modal with meal info" do
     @child.meal_tickets.create!(date: Date.today, bought: true)
+    @child.meal_details.create!(date: Date.today, period: "Almoço", main_dish: "Frango Assado")
+    @child.meal_details.create!(date: Date.today, period: "Almoço Vegetariano", main_dish: "Tofu Estufado")
+
     get day_details_path(date: Date.today.to_s)
     assert_response :success
     assert_match I18n.l(Date.today, format: :long), response.body
+    assert_match "Almoço", response.body
+    assert_match "Almoço Vegetariano", response.body
+    assert_match "Frango Assado", response.body
+    assert_match "Tofu Estufado", response.body
   end
 
   test "day_details handles invalid date gracefully" do

@@ -341,6 +341,7 @@ class GiaeScraperServiceTest < ActiveSupport::TestCase
     mock_response.stubs(:body).returns({
       refeicoes: [
         { data: "2024-03-15", comprada: true, descricaoprato: "Carne Assada" },    # Friday - kept
+        { data: "2024-03-15", comprada: true, descricaoprato: "Vegetariano" },     # Friday vegetarian - deduped
         { data: "2024-03-16", comprada: false, descricaoprato: "Peixe Grelhado" }, # Saturday - skipped
         { data: "2024-03-17", comprada: true, descricaoprato: "Vegetariano" }     # Sunday - skipped
       ].to_json
@@ -356,7 +357,7 @@ class GiaeScraperServiceTest < ActiveSupport::TestCase
     Net::HTTP.expects(:new).returns(mock_http)
 
     results = scraper.fetch_refeicoes_compra
-    assert_equal 1, results.length  # Only Friday is kept (Sat/Sun skipped)
+    assert_equal 1, results.length  # Only Friday is kept (Sat/Sun skipped, vegetarian deduped)
     assert_equal Date.parse("2024-03-15"), results[0][:date]
     assert_equal "meat", results[0][:dish_type]
   end
@@ -430,8 +431,62 @@ class GiaeScraperServiceTest < ActiveSupport::TestCase
     results = scraper.fetch_meal_details
     date = Date.parse("2024-03-15")
     assert results.key?(date)
-    assert_equal "Almoço", results[date][:descricaoperiodo]
-    assert_equal "Sopa de Legumes", results[date][:soup]
+    assert_equal 1, results[date].length
+    assert_equal "Almoço", results[date][0][:period]
+    assert_equal "Sopa de Legumes", results[date][0][:soup]
+  end
+
+  test "fetch_meal_details keeps normal and vegetarian options per date" do
+    scraper = GiaeScraperService.new(
+      username: @username,
+      password: @password,
+      login_url: @login_url,
+      school_code: @school_code,
+      session_cookie: "test_session"
+    )
+
+    mock_response = mock("response")
+    mock_response.stubs(:code).returns("200")
+    mock_response.stubs(:body).returns({
+      refeicoes: [
+        {
+          data: "2024-03-15",
+          descricaoperiodo: "Almoço",
+          descricaoprato: "Peixe",
+          sopa: "Sopa de Legumes",
+          prato: "Meia desfeita de Paloco",
+          vegetais: "Courgete",
+          sobremesa: "Fruta",
+          pao: "Pão"
+        },
+        {
+          data: "2024-03-15",
+          descricaoperiodo: "Almoço",
+          descricaoprato: "Vegetariano",
+          sopa: "Sopa de Legumes",
+          prato: "Meia desfeita de Tofu",
+          vegetais: "Courgete",
+          sobremesa: "Fruta",
+          pao: "Pão"
+        }
+      ].to_json
+    }.to_json)
+
+    mock_http = mock("http")
+    mock_http.expects(:use_ssl=).with(true)
+    mock_http.expects(:verify_mode=).with(OpenSSL::SSL::VERIFY_NONE)
+    mock_http.expects(:open_timeout=).with(45)
+    mock_http.expects(:read_timeout=).with(45)
+    mock_http.stubs(:request).returns(mock_response)
+
+    Net::HTTP.expects(:new).returns(mock_http)
+
+    results = scraper.fetch_meal_details
+    date = Date.parse("2024-03-15")
+    assert_equal 2, results[date].length
+    assert_equal [ "Almoço", "Almoço Vegetariano" ], results[date].map { |meal| meal[:period] }
+    assert_equal "Meia desfeita de Paloco", results[date][0][:main_dish]
+    assert_equal "Meia desfeita de Tofu", results[date][1][:main_dish]
   end
 
   test "post_request raises SessionExpired on 401" do

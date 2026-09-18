@@ -91,14 +91,16 @@ class RefreshMealTicketsJobTest < ActiveJob::TestCase
       { date: Date.today, bought: true, dish_type: "fish" }
     ])
     mock_scraper.expects(:fetch_meal_details).returns({
-      Date.today => {
-        descricaoperiodo: "Almoço",
-        soup: "Sopa de Legumes",
-        main_dish: "Peixe Grelhado",
-        vegetables: "Batatas Cozidas",
-        dessert: "Fruta",
-        bread: "Pão"
-      }
+      Date.today => [
+        {
+          period: "Almoço",
+          soup: "Sopa de Legumes",
+          main_dish: "Peixe Grelhado",
+          vegetables: "Batatas Cozidas",
+          dessert: "Fruta",
+          bread: "Pão"
+        }
+      ]
     })
 
     @job.expects(:with_session).with(@child).yields(mock_scraper)
@@ -113,6 +115,28 @@ class RefreshMealTicketsJobTest < ActiveJob::TestCase
     assert_equal "Almoço", detail.period
     assert_equal "Sopa de Legumes", detail.soup
     assert_equal "Peixe Grelhado", detail.main_dish
+  end
+
+  test "perform creates one meal detail per menu option" do
+    mock_scraper = mock("scraper")
+    mock_scraper.expects(:fetch_refeicoes_compra).returns([
+      { date: Date.today, bought: true, dish_type: "fish" }
+    ])
+    mock_scraper.expects(:fetch_meal_details).returns({
+      Date.today => [
+        { period: "Almoço", soup: "Sopa", main_dish: "Peixe Grelhado", vegetables: nil, dessert: nil, bread: nil },
+        { period: "Almoço Vegetariano", soup: "Sopa", main_dish: "Tofu", vegetables: nil, dessert: nil, bread: nil }
+      ]
+    })
+
+    @job.expects(:with_session).with(@child).yields(mock_scraper)
+
+    assert_difference "MealDetail.count", 2 do
+      @job.perform(@child)
+    end
+
+    periods = @child.meal_details.where(date: Date.today).order(:period).pluck(:period)
+    assert_equal [ "Almoço", "Almoço Vegetariano" ], periods
   end
 
   test "perform updates existing tickets" do

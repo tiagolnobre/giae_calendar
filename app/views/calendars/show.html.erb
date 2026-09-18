@@ -15,38 +15,16 @@
       <%= render "refresh_status", child: @child, refreshing: @child.refresh_in_progress? %>
     </div>
 
-    <% if @today_details %>
+    <% if @today_details.any? %>
       <div class="bg-white rounded-xl shadow-sm p-4 mb-4">
         <h3 class="text-lg font-semibold text-gray-800 mb-3"><%= t("calendar.today_menu") %></h3>
-        <div class="space-y-2 text-sm">
-          <% if @today_details.soup.present? %>
-            <div class="flex items-start">
-              <span class="font-medium text-gray-500 w-20"><%= t("calendar.soup") %>:</span>
-              <span class="text-gray-800"><%= @today_details.soup %></span>
-            </div>
-          <% end %>
-          <% if @today_details.main_dish.present? %>
-            <div class="flex items-start">
-              <span class="font-medium text-gray-500 w-20"><%= t("calendar.main_dish") %>:</span>
-              <span class="text-gray-800"><%= @today_details.main_dish %></span>
-            </div>
-          <% end %>
-          <% if @today_details.vegetables.present? %>
-            <div class="flex items-start">
-              <span class="font-medium text-gray-500 w-20"><%= t("calendar.vegetables") %>:</span>
-              <span class="text-gray-800"><%= @today_details.vegetables %></span>
-            </div>
-          <% end %>
-          <% if @today_details.dessert.present? %>
-            <div class="flex items-start">
-              <span class="font-medium text-gray-500 w-20"><%= t("calendar.dessert") %>:</span>
-              <span class="text-gray-800"><%= @today_details.dessert %></span>
-            </div>
-          <% end %>
-          <% if @today_details.bread.present? %>
-            <div class="flex items-start">
-              <span class="font-medium text-gray-500 w-20"><%= t("calendar.bread") %>:</span>
-              <span class="text-gray-800"><%= @today_details.bread %></span>
+        <div class="space-y-4 text-sm">
+          <% @today_details.each do |meal_detail| %>
+            <div>
+              <p class="font-semibold text-gray-800"><%= meal_detail.period %></p>
+              <div class="mt-2 space-y-2">
+                <%= render "calendars/meal_detail_fields", meal_detail: meal_detail %>
+              </div>
             </div>
           <% end %>
         </div>

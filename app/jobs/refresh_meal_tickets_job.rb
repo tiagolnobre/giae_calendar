@@ -48,19 +48,21 @@ class RefreshMealTicketsJob < ApplicationScraperJob
           ticket.dish_type = result[:dish_type]
           ticket.save!
 
-          if meal_details[result[:date]]
-            detail = MealDetail.find_or_initialize_by(
-              child: child,
-              date: result[:date],
-              period: meal_details[result[:date]][:descricaoperiodo] || "Almoço"
-            )
-            detail.user = child.user
-            detail.soup = meal_details[result[:date]][:soup]
-            detail.main_dish = meal_details[result[:date]][:main_dish]
-            detail.vegetables = meal_details[result[:date]][:vegetables]
-            detail.dessert = meal_details[result[:date]][:dessert]
-            detail.bread = meal_details[result[:date]][:bread]
-            detail.save!
+          if (details = meal_details[result[:date]])
+            details.each do |detail|
+              meal = MealDetail.find_or_initialize_by(
+                child: child,
+                date: result[:date],
+                period: detail[:period].presence || "Almoço"
+              )
+              meal.user = child.user
+              meal.soup = detail[:soup]
+              meal.main_dish = detail[:main_dish]
+              meal.vegetables = detail[:vegetables]
+              meal.dessert = detail[:dessert]
+              meal.bread = detail[:bread]
+              meal.save!
+            end
           end
         end
       end

@@ -108,14 +108,16 @@ class RefreshMealTicketsJobIntegrationTest < ActiveJob::TestCase
       { date: Date.today, bought: true, dish_type: "fish" }
     ])
     mock_scraper.expects(:fetch_meal_details).returns({
-      Date.today => {
-        descricaoperiodo: "Lunch",
-        soup: "Vegetable Soup",
-        main_dish: "Grilled Fish",
-        vegetables: "Potatoes",
-        dessert: "Fruit",
-        bread: "Yes"
-      }
+      Date.today => [
+        {
+          period: "Lunch",
+          soup: "Vegetable Soup",
+          main_dish: "Grilled Fish",
+          vegetables: "Potatoes",
+          dessert: "Fruit",
+          bread: "Yes"
+        }
+      ]
     })
 
     GiaeScraperService.stubs(:new).returns(mock_scraper)
