@@ -274,6 +274,11 @@ class GiaeScraperService
 
     # Detect session expiration
     if response.code == "401" || session_expired_response?(response.body)
+      if skip_auth
+        # A 401 during the login request itself is an authentication failure,
+        # not an expired session mid-use.
+        raise LoginError, "Login failed - invalid credentials (HTTP 401)"
+      end
       raise SessionExpired, "Session has expired (HTTP #{response.code})"
     end
 

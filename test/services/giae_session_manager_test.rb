@@ -99,7 +99,7 @@ class GiaeSessionManagerTest < ActiveSupport::TestCase
 
     # When session is old, obtain_new_session! is called which tries to login
     # The login will fail because there's no real GIAE connection
-    assert_raises(GiaeScraperService::SessionExpired) do
+    assert_raises(GiaeScraperService::LoginError) do
       @manager.with_active_session { |_| }
     end
   end

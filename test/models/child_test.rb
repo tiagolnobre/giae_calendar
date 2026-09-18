@@ -31,6 +31,20 @@ class ChildTest < ActiveJob::TestCase
     assert_equal "161676", child.giae_school_code
   end
 
+  test "defaults school code when blank on creation" do
+    child = users(:one).children.create!(
+      giae_username: "newuser",
+      giae_password: "newpass",
+      giae_school_code: ""
+    )
+    assert_equal "161676", child.reload.giae_school_code
+  end
+
+  test "defaults school code when blank on update" do
+    @child.update!(giae_school_code: "")
+    assert_equal "161676", @child.reload.giae_school_code
+  end
+
   test "should not be valid without giae_username" do
     child = Child.new
     assert_not child.valid?

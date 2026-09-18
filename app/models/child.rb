@@ -16,7 +16,7 @@ class Child < ApplicationRecord
   # until we know how to get a list of schools let's keep it hardcoded
   DEFAULT_SCHOOL_CODE = "161676"
 
-  before_validation :set_default_school_code, on: :create
+  before_validation :set_default_school_code
 
   after_create_commit :enqueue_initial_data_fetch
 
@@ -50,7 +50,7 @@ class Child < ApplicationRecord
   private
 
   def set_default_school_code
-    self.giae_school_code ||= DEFAULT_SCHOOL_CODE
+    self.giae_school_code = DEFAULT_SCHOOL_CODE if giae_school_code.blank?
   end
 
   def enqueue_initial_data_fetch

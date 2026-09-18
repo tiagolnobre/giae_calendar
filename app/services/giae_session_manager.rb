@@ -123,7 +123,7 @@ class GiaeSessionManager
       username: @child.giae_username,
       password: @child.giae_password,
       login_url: Rails.application.config.giae_login_url,
-      school_code: @child.giae_school_code
+      school_code: @child.giae_school_code.presence || Child::DEFAULT_SCHOOL_CODE
     )
   end
 
@@ -143,7 +143,7 @@ class GiaeSessionManager
       username: @child.giae_username,
       password: @child.giae_password,
       login_url: Rails.application.config.giae_login_url,
-      school_code: @child.giae_school_code,
+      school_code: @child.giae_school_code.presence || Child::DEFAULT_SCHOOL_CODE,
       session_cookie: cookie
     )
   end
